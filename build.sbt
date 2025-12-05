@@ -30,6 +30,21 @@ lazy val root = (project in file("."))
     crossScalaVersions := supportedScalaVersions
   )
 
+lazy val integrationTest = (project in file("it"))
+  .enablePlugins(ScalafmtPlugin)
+  .settings(
+    commonSettings,
+    name := "anvil-integration-test",
+    publish / skip := true,
+    libraryDependencies ++= Dependencies.it,
+    parallelExecution := false,
+    coverageFailOnMinimum := true,
+    coverageMinimumStmtTotal := 85,
+    coverageMinimumBranchTotal := 80
+  )
+  .dependsOn(root % "test->test; compile->compile")
+  .aggregate(root)
+
 ThisBuild / version := "0.0.0"
 ThisBuild / organization := "io.github.thediscprog"
 ThisBuild / organizationName := "thediscprog"
