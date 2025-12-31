@@ -11,12 +11,15 @@
         </encoder>
     </appender>
 
-    <logger name="io.github.thediscprog.anvil" additivity="true" level="TRACE">
+    <logger name="io.github.thediscprog.anvil" additivity="true" level="WARN">
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <logger name="ch.qos.logback" level="TRACE"/>
-    <root level="TRACE">
+    <logger name="ch.qos.logback" additivity="true" level="WARN">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <root level="WARN">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>

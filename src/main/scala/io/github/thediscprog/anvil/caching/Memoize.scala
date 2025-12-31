@@ -6,27 +6,31 @@ import com.github.blemale.scaffeine.Scaffeine
 import scala.concurrent.duration._
 import cats.syntax.all.*
 import org.typelevel.log4cats.Logger
-import java.sql.ResultSetMetaData
 
-sealed trait Memoize[K, V, F[_]] {
+sealed trait Memoize[K, F[_]] {
 
-  def memoize(k: K)(f: K => F[V]): F[V]
+  def has(k: K): Boolean
+
+  def memoize[V](k: K)(f: K => F[V]): F[V]
 
 }
 
-class CaffeineMemoize[F[_]: Monad: Logger]
-    extends Memoize[String, ResultSetMetaData, F] {
+class CaffeineMemoize[F[_]: {Monad, Logger}] extends Memoize[String, F] {
 
-  val cache: Cache[String, ResultSetMetaData] =
+  val cache: Cache[String, Any] =
     Scaffeine()
       .recordStats()
       .expireAfterWrite(1.hour)
-      .build[String, ResultSetMetaData]()
+      .build[String, Any]()
 
-  override def memoize(k: String)(
-      f: String => F[ResultSetMetaData]
-  ): F[ResultSetMetaData] = {
-    val value: Option[ResultSetMetaData] = cache.getIfPresent(k)
+  override def has(k: String): Boolean = cache.getIfPresent(k) match
+    case Some(_) => true
+    case _       => false
+
+  override def memoize[V](k: String)(
+      f: String => F[V]
+  ): F[V] = {
+    val value = cache.getIfPresent(k)
     if (value == null || value.isEmpty) {
       for {
         _ <- Logger[F].debug(s"Memoize: Storing for $k")
@@ -36,11 +40,12 @@ class CaffeineMemoize[F[_]: Monad: Logger]
     } else {
       value match
         case Some(stored) =>
-          Logger[F].debug(s"Memoize: Have stored value for $k") >> stored
+          Logger[F].debug(s"Memoize: Have stored value for $k") >> (stored
+            .asInstanceOf[V])
             .pure[F]
         case None =>
           throw new RuntimeException(
-            "Memoization function failed to get ResultsetMetaData for $k"
+            "Memoization function failed to get value for $k"
           )
     }
   }
@@ -49,5 +54,5 @@ class CaffeineMemoize[F[_]: Monad: Logger]
 
 object Memoize {
 
-  def getMemoizeFunction[F[_]: Monad: Logger] = new CaffeineMemoize[F]()
+  def getMemoizeFunction[F[_]: {Monad, Logger}] = new CaffeineMemoize[F]()
 }

@@ -9,7 +9,7 @@ import java.sql.ResultSetMetaData
 import org.scalatest.concurrent.ScalaFutures
 import cats.effect.unsafe.implicits.global
 
-class MemoizeTest extends AnyFlatSpec with Matchers with ScalaFutures {
+class MemoizeTest extends AnyFlatSpec, Matchers, ScalaFutures {
 
   private given unsafeLogger: SelfAwareStructuredLogger[IO] =
     Slf4jLogger.getLogger[IO]
@@ -17,14 +17,15 @@ class MemoizeTest extends AnyFlatSpec with Matchers with ScalaFutures {
   val memoizeFunction = Memoize.getMemoizeFunction[IO]
 
   it should "return a stored value" in {
-    val result = (memoizeFunction.memoize("key")(_ => IO(metadata))).unsafeToFuture()
+    val result =
+      (memoizeFunction.memoize("key")(_ => IO(metadata))).unsafeToFuture()
 
-    whenReady(result){r =>
-        r.getScale(1) shouldBe 99
+    whenReady(result) { r =>
+      r.getScale(1) shouldBe 99
     }
   }
 
-  val metadata = new ResultSetMetaData(){
+  val metadata = new ResultSetMetaData() {
 
     override def getScale(column: Int): Int = 99
 
@@ -71,7 +72,6 @@ class MemoizeTest extends AnyFlatSpec with Matchers with ScalaFutures {
     override def isWrapperFor(iface: Class[?]): Boolean = ???
 
     override def unwrap[T](iface: Class[T]): T = ???
-
 
   }
 }

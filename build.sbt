@@ -4,9 +4,8 @@ import xerial.sbt.Sonatype._
 
 import scala.collection.Seq
 
-lazy val scala2 = "2.13.15"
 lazy val scala3 = "3.7.3"
-lazy val supportedScalaVersions = List(scala2, scala3)
+lazy val supportedScalaVersions = List(scala3)
 
 lazy val commonSettings = Seq(
   scalaVersion := scala3,
@@ -21,12 +20,6 @@ lazy val root = (project in file("."))
     commonSettings,
     name := "anvil",
     scalacOptions ++= Scalac.options,
-    scalacOptions ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2,13)) => Seq("-Ytasty-reader")
-        case _ => Seq("-Yretain-trees")
-      }
-    },
     crossScalaVersions := supportedScalaVersions
   )
 
@@ -45,19 +38,19 @@ lazy val integrationTest = (project in file("it"))
   .dependsOn(root % "test->test; compile->compile")
   .aggregate(root)
 
-ThisBuild / version := "0.0.0"
+ThisBuild / version := "0.1.0"
 ThisBuild / organization := "io.github.thediscprog"
 ThisBuild / organizationName := "thediscprog"
 ThisBuild / organizationHomepage := Some(url("https://github.com/TheDiscProg"))
 
-ThisBuild / description := "Anvil - A Functional library for Databases"
+ThisBuild / description := "Anvil - A Functional Relational Mapping library for Databases"
 
 // Sonatype/Maven Publishing
 ThisBuild / publishMavenStyle := true
 ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
 ThisBuild / publishTo := sonatypePublishToBundle.value
 ThisBuild / sonatypeProfileName := "io.github.thediscprog"
-ThisBuild / licenses := List("GNU-3.0" -> url("https://www.gnu.org/licenses/gpl-3.0.en.html"))
+ThisBuild / licenses := List("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
 ThisBuild / homepage := Some(url("https://github.com/TheDiscProg/anvil"))
 ThisBuild / sonatypeProjectHosting := Some(GitHubHosting("TheDiscProg", "anvil", "TheDiscProg@gmail.com"))
 ThisBuild / scmInfo := Some(
@@ -83,5 +76,9 @@ sonatypeRepository := "https://central.sonatype.com/api/v1/publisher/"
 
 ThisBuild / versionScheme := Some("early-semver")
 
+addCommandAlias("formatAll", ";scalafmt;test:scalafmt;integrationTest/test:scalafmt;")
+addCommandAlias("cleanAll", ";clean;integrationTest/clean")
+addCommandAlias("itTest", ";integrationTest/clean;integrationTest/test:scalafmt;integrationTest/test")
 addCommandAlias("cleanTest", ";clean;scalafmt;test:scalafmt;test;")
-addCommandAlias("cleanCoverage", ";clean;scalafmt;test:scalafmt;coverage;test;coverageReport;")
+addCommandAlias("testAll", ";cleanAll;formatAll;test;itTest;")
+addCommandAlias("cleanCoverage", ";cleanAll;formatAll;coverage;testAll;coverageReport;")

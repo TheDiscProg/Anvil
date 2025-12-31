@@ -3,7 +3,7 @@ package io.github.thediscprog.anvil.adt
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class CriteriaTest extends AnyFlatSpec with Matchers {
+class CriteriaTest extends AnyFlatSpec, Matchers {
 
   it should "send an empty string for no where clause" in {
     val clause = Criteria.getWhereClause(List())
@@ -17,7 +17,7 @@ class CriteriaTest extends AnyFlatSpec with Matchers {
     val clause    = Criteria.getWhereClause(List(andClause))
 
     clause._1 shouldBe "WHERE (id>?)"
-    clause._2 shouldBe Array(1)
+    clause._2 shouldBe List(1)
   }
 
   it should "handle less than operand" in {
@@ -81,9 +81,8 @@ class CriteriaTest extends AnyFlatSpec with Matchers {
     val clause   = Criteria.getWhereClause(List(inClause))
 
     clause._1 shouldBe "WHERE (id IN (?,?))"
-    clause._2 shouldBe Array(1,2)
+    clause._2 shouldBe Array(1, 2)
   }
-
 
   it should "handle combination of AND, OR & IN" in {
     val inClause  = IN[Int]("id", List(1, 2))
@@ -92,7 +91,6 @@ class CriteriaTest extends AnyFlatSpec with Matchers {
     val clauses   = Criteria.getWhereClause(List(inClause, orClause, andClause))
 
     clauses._1 shouldBe "WHERE (id IN (?,?)) AND (id=? OR name=?) AND (id=? AND name=?)"
-    clauses._2 shouldBe Array(1,2, 1, "John", 2, "Alice")
+    clauses._2 shouldBe Array(1, 2, 1, "John", 2, "Alice")
   }
 }
- 

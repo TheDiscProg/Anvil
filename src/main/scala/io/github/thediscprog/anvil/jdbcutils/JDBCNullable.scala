@@ -1,4 +1,4 @@
-package io.github.thediscprog.anvil.adt
+package io.github.thediscprog.anvil.jdbcutils
 
 trait JDBCNullable
 

@@ -24,8 +24,18 @@ class StandardSql extends SqlDialect {
   ): String =
     s"INSERT INTO $table ($columns) VALUES (${parameters.map(_ => "?").mkString(",")})"
 
-  override def update(columns: String, table: String, where: String): String =
-    ???
+  override def update(
+      updateColumns: String,
+      table: String,
+      where: String
+  ): String =
+    s"UPDATE $table SET $updateColumns $where"
+
+  override def delete(
+      table: String,
+      where: String
+  ): String =
+    s"DELETE FROM $table $where"
 
   override def getANSIType(value: Any): String =
     value match

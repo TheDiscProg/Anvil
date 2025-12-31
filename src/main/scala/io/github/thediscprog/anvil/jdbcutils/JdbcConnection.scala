@@ -1,12 +1,10 @@
-package io.github.thediscprog.anvil
+package io.github.thediscprog.anvil.jdbcutils
 
 import cats.effect.kernel.Async
 import cats.syntax.all.*
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 
 import java.sql.Connection
-
-//lll
 
 object JdbcConnection {
 

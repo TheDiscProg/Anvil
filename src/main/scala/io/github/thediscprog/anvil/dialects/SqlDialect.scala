@@ -12,7 +12,9 @@ trait SqlDialect {
 
   def insert(columns: String, table: String, parameters: Array[Any]): String
 
-  def update(columns: String, table: String, where: String): String
+  def update(updateColumns: String, table: String, where: String): String
+
+  def delete(table: String, where: String): String
 
   def getANSIType(value: Any): String
 
