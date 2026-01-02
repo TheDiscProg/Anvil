@@ -14,4 +14,5 @@ Please the [Wiki page](https://github.com/TheDiscProg/Anvil/wiki) for more detai
 ## Current Status
 * ANSI/ISO SQL is supported for major CRUD commands for single tables.
 * PostgreSQL 14 and above is supported including PostgreSQL data types.
+* MySQL 8 and above is supported including MySQL 8 specific data types.
 
