@@ -9,6 +9,7 @@ import java.io.Reader
 import java.util.BitSet
 import java.time.OffsetTime
 import java.time.OffsetDateTime
+import java.{util => ju}
 
 trait JDBCConverter[T] {
 
@@ -140,6 +141,14 @@ object JDBCConverter {
 
   }
 
+  given binaryConverter: JDBCConverter[Array[Byte]] with {
+    override def toString(): String = "Binary to Array Converter"
+
+    override def convertToScala(value: Any): Array[Byte] = {
+      value.asInstanceOf[Array[Byte]]
+    }
+  }
+
   given offsetTimeConverter: JDBCConverter[OffsetTime] with {
     override def toString(): String = "Offset Time Converter"
 
@@ -197,6 +206,15 @@ object JDBCConverter {
       value.asInstanceOf[UUID]
   }
 
+  given byteToUUIDConverter: JDBCConverter[UUID] with {
+    override def toString(): String = "Byte to UUID Converter"
+
+    override def convertToScala(value: Any): ju.UUID = {
+      val array = value.asInstanceOf[Array[Byte]]
+      bytesToUUID(array)
+    }
+  }
+
   given unitConverter: JDBCConverter[Unit] with {
     override def toString(): String = "NULL/Unit type Converter"
 
@@ -213,6 +231,15 @@ object JDBCConverter {
     override def toString(): String = "BitSet Converter"
 
     override def convertToScala(value: Any): BitSet = value.asInstanceOf[BitSet]
+  }
+
+  given bitSetByteArrayConverter: JDBCConverter[BitSet] with {
+    override def toString(): String = "Bit -> ByteArray Converter"
+
+    override def convertToScala(value: Any): ju.BitSet = {
+      val bytes = value.asInstanceOf[Array[Byte]]
+      ju.BitSet.valueOf(bytes)
+    }
   }
 
 }

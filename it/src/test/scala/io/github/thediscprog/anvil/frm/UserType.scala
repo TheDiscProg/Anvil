@@ -18,14 +18,17 @@ final case class UserType(
 
 object UserType {
 
-  private val userTypeProperties = TableProperties(
+  private def userTypeProperties(vendor: DbVendor) = TableProperties(
     table = "user_type",
     isNamingSpecial = false,
     cachingKey = "user-type",
-    dialect = DbVendor.POSTGRESQL,
+    dialect = vendor,
     columnNames = Seq("type_key", "title", "description")
   )
 
-  def userTypeFrm[F[_]: {Monad, Logger}](connection: Connection) =
-    TableMapping.getFRM[F, UserType](userTypeProperties, connection)
+  def userTypeFrm[F[_]: {Monad, Logger}](
+      connection: Connection,
+      vendor: DbVendor
+  ) =
+    TableMapping.getFRM[F, UserType](userTypeProperties(vendor), connection)
 }

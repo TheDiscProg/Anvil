@@ -13,6 +13,12 @@ import java.util.BitSet
 import java.{util => ju}
 import java.time.OffsetTime
 import java.time.OffsetDateTime
+import io.github.thediscprog.anvil.dialects.SqlDialect
+import JDBCConverter.{
+  byteToUUIDConverter,
+  bitSetByteArrayConverter,
+  binaryConverter
+}
 
 trait JDBCReader[T](using val converter: JDBCConverter[T]) {
 
@@ -22,25 +28,35 @@ trait JDBCReader[T](using val converter: JDBCConverter[T]) {
     Option(readFromDb(index, rs))
 
   def readArray(
+      columnName: String,
       index: Int,
       isNullable: Boolean,
       rs: ResultSet,
-      reader: JDBCReaderSelector
+      reader: JDBCReaderSelector,
+      dialect: SqlDialect
   ): List[Any] | Option[List[Any]] = {
     if (isNullable) {
       val sqlArray = Option(rs.getArray(index))
-      sqlArray.map(array => readArrayValues(array, reader))
+      sqlArray.map(array => readArrayValues(columnName, array, reader, dialect))
     } else {
-      readArrayValues(rs.getArray(index), reader)
+      readArrayValues(columnName, rs.getArray(index), reader, dialect)
     }
   }
 
   private def readArrayValues(
+      columnName: String,
       sqlArray: java.sql.Array,
-      reader: JDBCReaderSelector
+      reader: JDBCReaderSelector,
+      dialect: SqlDialect
   ): List[Any] = {
     val scalaArray = sqlArray.getArray().asInstanceOf[Array[Any]]
-    val baseReader = reader.getJdbcReader(sqlArray.getBaseType(), "ARRAY", "")
+    val baseReader = reader.getJdbcReader(
+      columnName,
+      sqlArray.getBaseType(),
+      "ARRAY",
+      "",
+      dialect
+    )
     scalaArray.toList.map(baseReader.converter.convertToScala)
   }
 
@@ -155,12 +171,12 @@ object JDBCReader {
 
   val objectReader = new JDBCReader[Any]() {
     override def readFromDb(index: Int, rs: ResultSet): Any = {
-      // val colType     = rs.getMetaData().getColumnType(index)
-      // val colTypeName = rs.getMetaData().getColumnTypeName(index)
-      // println(
-      //   s"Object Reader reading [$colType] [$colTypeName] [${rs.getObject(index)}]"
-      // )
-
+      val colType     = rs.getMetaData().getColumnType(index)
+      val colTypeName = rs.getMetaData().getColumnTypeName(index)
+      if (printDebugInfo) then
+        println(
+          s"Object Reader reading [$colType] [$colTypeName] [${rs.getObject(index)}]"
+        )
       rs.getObject(index).asInstanceOf[Any]
     }
 
@@ -175,6 +191,13 @@ object JDBCReader {
     override def toString(): String = "UUID Reader"
   }
 
+  val byteToUUIDReader = new JDBCReader[UUID](using byteToUUIDConverter) {
+
+    override def readFromDb(index: Int, rs: ResultSet): ju.UUID = {
+      bytesToUUID(rs.getBytes(index))
+    }
+  }
+
   val unitReader = new JDBCReader[Unit] {
     override def readFromDb(index: Int, rs: ResultSet): Unit = ()
 
@@ -187,6 +210,14 @@ object JDBCReader {
       rs.getArray(index).getArray().asInstanceOf[Array[Any]]
 
     override def toString(): String = "Array[Any] Reader"
+  }
+
+  val binaryReader = new JDBCReader[Array[Byte]](using binaryConverter) {
+    override def readFromDb(index: Int, rs: ResultSet): Array[Byte] = {
+      rs.getBytes(index)
+    }
+
+    override def toString(): String = "Binary to Array[Byte] Reader"
   }
 
   val blobReader = new JDBCReader[InputStream] {
@@ -217,6 +248,9 @@ object JDBCReader {
     override def toString(): String = "NString/String Reader"
   }
 
+  /** This is a default BIT reader, but it will not work with all databases.
+    * PostgreSQL Bit
+    */
   val bitSetReader = new JDBCReader[BitSet] {
     override def readFromDb(index: Int, rs: ResultSet): ju.BitSet = {
       val bitStr = rs.getString(index)
@@ -225,6 +259,18 @@ object JDBCReader {
 
     override def toString(): String = "BitSet Reader"
   }
+
+  /** MySQL Bit Reader
+    */
+  val bitSetByteArrayReader =
+    new JDBCReader[BitSet](using bitSetByteArrayConverter) {
+      override def readFromDb(index: Int, rs: ResultSet): ju.BitSet = {
+        val bytes = rs.getBytes(index)
+        ju.BitSet.valueOf(bytes)
+      }
+
+      override def toString(): String = "BitSet to ByteArray Reader"
+    }
 
   private transparent inline def getObjectAs[V: ClassTag](
       index: Int,

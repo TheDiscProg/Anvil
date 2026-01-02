@@ -163,7 +163,8 @@ object TableMapping {
           columnDescriptors = ColumnDescriptor.getColumnInformation(
             metadata,
             fieldMap,
-            reader
+            reader,
+            dialect
           )
           _ <- Logger[F].debug(
             s"==== Column Descriptors: [${columnDescriptors}] ===="
@@ -301,7 +302,14 @@ object TableMapping {
             cd.reader.readFromDb(cd.index, rs)
           }
         } else {
-          cd.reader.readArray(cd.index, cd.nullable, rs, reader)
+          cd.reader.readArray(
+            cd.columnName,
+            cd.index,
+            cd.nullable,
+            rs,
+            reader,
+            dialect
+          )
         }
       }
 

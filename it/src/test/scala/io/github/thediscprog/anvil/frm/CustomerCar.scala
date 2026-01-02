@@ -22,11 +22,11 @@ final case class CustomerCar(
 )
 
 object CustomerCar {
-  private val customerCarProperties = TableProperties(
+  private def customerCarProperties(vendor: DbVendor) = TableProperties(
     table = "user_cars",
     isNamingSpecial = false,
     cachingKey = "customer-cars",
-    dialect = DbVendor.POSTGRESQL,
+    dialect = vendor,
     columnNames = Seq(
       "id",
       "customer_id",
@@ -37,6 +37,12 @@ object CustomerCar {
     )
   )
 
-  def customerCarFrm[F[_]: {Monad, Logger}](connection: Connection) =
-    TableMapping.getFRM[F, CustomerCar](customerCarProperties, connection)
+  def customerCarFrm[F[_]: {Monad, Logger}](
+      connection: Connection,
+      vendor: DbVendor
+  ) =
+    TableMapping.getFRM[F, CustomerCar](
+      customerCarProperties(vendor),
+      connection
+    )
 }

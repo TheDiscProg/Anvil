@@ -8,6 +8,7 @@ import cats.Monad
 import org.typelevel.log4cats.Logger
 import java.sql.Connection
 import io.github.thediscprog.anvil.adt.TableMapping
+import io.github.thediscprog.anvil.dialects.SqlDialect
 
 @PrimaryKey(PrimaryKeyType.SINGLE, List("addressId"), false)
 final case class Address(
@@ -20,15 +21,18 @@ final case class Address(
 )
 
 object Address {
-  private val addressProperties = TableProperties(
+  private def addressProperties(vendor: DbVendor) = TableProperties(
     table = "address",
     isNamingSpecial = false,
     cachingKey = "address",
-    dialect = DbVendor.POSTGRESQL,
+    dialect = vendor,
     columnNames =
       Seq("address_id", "street", "town", "county", "post_code", "country")
   )
 
-  def addressFrm[F[_]: {Monad, Logger}](connection: Connection) =
-    TableMapping.getFRM[F, Address](addressProperties, connection)
+  def addressFrm[F[_]: {Monad, Logger}](
+      connection: Connection,
+      vendor: DbVendor
+  ) =
+    TableMapping.getFRM[F, Address](addressProperties(vendor), connection)
 }
