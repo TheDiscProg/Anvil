@@ -10,6 +10,7 @@ object Dependencies {
   private lazy val logbackClassicVersion = "1.5.21"
   private lazy val log4catsVersion = "2.7.1"
   private lazy val postgresVersion = "42.7.8"
+  private lazy val mysqlVersion = "9.5.0"
   private lazy val testcontainerVersion = "2.0.1"
 
   lazy val all = Seq(
@@ -26,6 +27,8 @@ object Dependencies {
 
   lazy val it = Seq(
     "org.postgresql" % "postgresql" % postgresVersion % Test,
-    "org.testcontainers" % "testcontainers-postgresql" % testcontainerVersion % Test
+    "org.testcontainers" % "testcontainers-postgresql" % testcontainerVersion % Test,
+    "com.mysql" % "mysql-connector-j" % mysqlVersion % Test,
+    "org.testcontainers" % "testcontainers-mysql" % testcontainerVersion % Test
   )
 }

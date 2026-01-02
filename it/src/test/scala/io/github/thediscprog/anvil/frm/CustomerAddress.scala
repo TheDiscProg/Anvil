@@ -17,17 +17,20 @@ final case class CustomerAddress(
 )
 
 object CustomerAddress {
-  private val customerAddressProperties = TableProperties(
+  private def customerAddressProperties(vendor: DbVendor) = TableProperties(
     table = "customer_address",
     isNamingSpecial = false,
     cachingKey = "customer-address",
-    dialect = DbVendor.POSTGRESQL,
+    dialect = vendor,
     columnNames = Seq("customer_id", "address_id", "comment")
   )
 
-  def customerAddressFrm[F[_]: {Monad, Logger}](connection: Connection) =
+  def customerAddressFrm[F[_]: {Monad, Logger}](
+      connection: Connection,
+      vendor: DbVendor
+  ) =
     TableMapping.getFRM[F, CustomerAddress](
-      customerAddressProperties,
+      customerAddressProperties(vendor),
       connection
     )
 }

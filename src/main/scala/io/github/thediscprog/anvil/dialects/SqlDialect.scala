@@ -1,5 +1,8 @@
 package io.github.thediscprog.anvil.dialects
 
+import java.sql.PreparedStatement
+import io.github.thediscprog.anvil.jdbcutils.JDBCReader
+
 trait SqlDialect {
 
   val specialIdentifierCharacter: Char
@@ -22,6 +25,18 @@ trait SqlDialect {
     throw new IllegalArgumentException(
       s"Unsupported database specific type: [${value.getClass()}]"
     )
+
+  def bindParameter(
+      ptst: PreparedStatement,
+      value: Any,
+      index: Int
+  ): Boolean = false
+
+  def getDBTypeReader(
+      jdbcType: Int,
+      scalaFieldName: String,
+      columnTypeName: String
+  ): JDBCReader[?] | Boolean = false
 
 }
 

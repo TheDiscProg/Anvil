@@ -25,11 +25,11 @@ final case class User(
 
 object User {
 
-  private val userProperties = TableProperties(
+  private def userProperties(vendor: DbVendor) = TableProperties(
     table = "users",
     isNamingSpecial = false,
     cachingKey = "users",
-    dialect = DbVendor.POSTGRESQL,
+    dialect = vendor,
     columnNames = Seq(
       "user_id",
       "user_name",
@@ -42,6 +42,9 @@ object User {
     )
   )
 
-  def usersFrm[F[_]: {Monad, Logger}](connection: Connection) =
-    TableMapping.getFRM[F, User](userProperties, connection)
+  def usersFrm[F[_]: {Monad, Logger}](
+      connection: Connection,
+      vendor: DbVendor
+  ) =
+    TableMapping.getFRM[F, User](userProperties(vendor), connection)
 }

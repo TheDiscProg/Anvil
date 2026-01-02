@@ -17,6 +17,7 @@ import io.github.thediscprog.anvil.frm.PostgresDataTypes
 import java.util.UUID
 import io.github.thediscprog.anvil.adt.KeyValue
 import io.github.thediscprog.anvil.adt.AND
+import io.github.thediscprog.anvil.dialects.DbVendor
 
 class PostgresTableMapTest extends TableMapTest {
 
@@ -36,11 +37,10 @@ class PostgresTableMapTest extends TableMapTest {
     config.setUsername(username)
     config.setPassword(password)
     val connection = JdbcConnection.openJdbcConnection(config)
-    new DatabaseFixture[IO](connection)
+    new DatabaseFixture[IO](connection, DbVendor.POSTGRESQL)
   }
 
   override protected def beforeAll(): Unit = {
-
     postgres.start()
   }
 
@@ -55,20 +55,19 @@ class PostgresTableMapTest extends TableMapTest {
     val uuidKey    = KeyValue[UUID]("col_uuid", uuid)
     val criteria   = Criteria(List(AND(List(uuidKey))))
 
-    val rows = frm.filter(Criteria(List()))
-
     val result =
       for {
         rowMaybe <- frm.headOption(Criteria(List()))
         row = rowMaybe match
           case Some(row) => row
           case None      => fail("Failed to fetch a row that should exist")
-        newRow = row.copy(colUUID = Some(uuid))
-        added  <- frm.add(newRow)
+        rowToAdd = row.copy(colUUID = Some(uuid))
+        added  <- frm.add(rowToAdd)
         newRow <- frm.headOption(criteria)
       } yield (row, added, newRow)
 
     whenReady(result.unsafeToFuture()) { (row, added, newRow) =>
+      row.colBigInt shouldBe Some(BigInt("10000000000"))
       newRow.isDefined shouldBe true
       added shouldBe 1
       newRow.value.colUUID shouldBe Some(uuid)

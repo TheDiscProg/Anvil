@@ -29,67 +29,51 @@ object JDBCBinder {
       connection: Connection,
       dialect: SqlDialect
   ): Unit = {
-    val metadata = ptst.getParameterMetaData()
-    // val colType  = metadata.getParameterType(index)
-    val colName = metadata.getParameterTypeName(index)
-    value match
-      case v: Array      => ptst.setArray(index, v)
-      case v: BigDecimal => ptst.setBigDecimal(index, v.bigDecimal)
-      case v: Blob       => ptst.setBlob(index, v)
-      case v: Boolean    => ptst.setBoolean(index, v)
-      case v: Byte       => ptst.setByte(index, v)
-      case v: NClob      => ptst.setNClob(index, v)
-      case v: Clob       => ptst.setClob(index, v)
-      case v: Date       => ptst.setDate(index, v)
-      case v: Double     =>
-        colName match
-          case "money" =>
-            ptst.setBigDecimal(index, new java.math.BigDecimal(v.toShort))
-          case _ => ptst.setDouble(index, v)
-      case v: Float  => ptst.setFloat(index, v)
-      case v: Int    => ptst.setInt(index, v)
-      case v: Long   => ptst.setLong(index, v)
-      case v: String =>
-        colName match
-          case "xml" => ptst.setObject(index, v, Types.SQLXML)
-          case "tsvector" | "tsquery" | "xid" | "xid8" | "txid_snapshot" |
-              "pg_lsn" =>
-            ptst.setObject(index, v, Types.OTHER)
-          case "point" | "line" | "lseg" | "box" | "path" | "polygon" |
-              "circle" =>
-            ptst.setObject(index, v, Types.OTHER)
-          case _ => ptst.setString(index, v)
-      case null         => ptst.setNull(index, Types.NULL)
-      case v: Ref       => ptst.setRef(index, v)
-      case v: RowId     => ptst.setRowId(index, v)
-      case v: Short     => ptst.setShort(index, v)
-      case v: SQLXML    => ptst.setSQLXML(index, v)
-      case v: Time      => ptst.setTime(index, v)
-      case v: Timestamp => ptst.setTimestamp(index, v)
-      // non java.sql types that are supported
-      case Some(value) => bindParameter(ptst, value, index, connection, dialect)
-      case None        => ptst.setNull(index, Types.NULL)
-      case v: List[?]  => bindCollection(ptst, v, index, connection, dialect)
-      case v: InputStream   => ptst.setBinaryStream(index, v)
-      case v: Reader        => ptst.setCharacterStream(index, v)
-      case v: URL           => ptst.setURL(index, v)
-      case v: LocalDate     => ptst.setObject(index, v)
-      case v: LocalTime     => ptst.setObject(index, v)
-      case v: LocalDateTime => ptst.setObject(index, v)
-      case v: BitSet        =>
-        val s = bitSetConverter(convertBitSet(v))
-        ptst.setObject(index, s, Types.OTHER)
-      case v: JBitSet =>
-        val s = bitSetConverter(v)
-        ptst.setObject(index, s, Types.OTHER)
-      case other =>
-        ptst.setObject(index, other, Types.OTHER)
-  }
-
-  private def convertBitSet(bs: BitSet): JBitSet = {
-    val jbs = new JBitSet()
-    bs.foreach(jbs.set)
-    jbs
+    val isVendorBinding = dialect.bindParameter(ptst, value, index)
+    if (printDebugInfo) then
+      println(s"Binding parameter index: $index: [$isVendorBinding]")
+    if (!isVendorBinding) {
+      value match
+        case v: Array      => ptst.setArray(index, v)
+        case v: BigDecimal => ptst.setBigDecimal(index, v.bigDecimal)
+        case v: Blob       => ptst.setBlob(index, v)
+        case v: Boolean    => ptst.setBoolean(index, v)
+        case v: Byte       => ptst.setByte(index, v)
+        case v: NClob      => ptst.setNClob(index, v)
+        case v: Clob       => ptst.setClob(index, v)
+        case v: Date       => ptst.setDate(index, v)
+        case v: Double     => ptst.setDouble(index, v)
+        case v: Float      => ptst.setFloat(index, v)
+        case v: Int        => ptst.setInt(index, v)
+        case v: Long       => ptst.setLong(index, v)
+        case v: String     => ptst.setString(index, v)
+        case null          => ptst.setNull(index, Types.NULL)
+        case v: Ref        => ptst.setRef(index, v)
+        case v: RowId      => ptst.setRowId(index, v)
+        case v: Short      => ptst.setShort(index, v)
+        case v: SQLXML     => ptst.setSQLXML(index, v)
+        case v: Time       => ptst.setTime(index, v)
+        case v: Timestamp  => ptst.setTimestamp(index, v)
+        // non java.sql types that are supported
+        case Some(value) =>
+          bindParameter(ptst, value, index, connection, dialect)
+        case None       => ptst.setNull(index, Types.NULL)
+        case v: List[?] => bindCollection(ptst, v, index, connection, dialect)
+        case v: InputStream   => ptst.setBinaryStream(index, v)
+        case v: Reader        => ptst.setCharacterStream(index, v)
+        case v: URL           => ptst.setURL(index, v)
+        case v: LocalDate     => ptst.setObject(index, v)
+        case v: LocalTime     => ptst.setObject(index, v)
+        case v: LocalDateTime => ptst.setObject(index, v)
+        case v: BitSet        =>
+          val s = bitSetConverter(convertBitSet(v))
+          ptst.setObject(index, s, Types.OTHER)
+        case v: JBitSet =>
+          val s = bitSetConverter(v)
+          ptst.setObject(index, s, Types.OTHER)
+        case other =>
+          ptst.setObject(index, other, Types.OTHER)
+    }
   }
 
   private def bitSetConverter(bs: JBitSet): String = {

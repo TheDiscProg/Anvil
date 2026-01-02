@@ -56,7 +56,7 @@ abstract class TableMapTest()
     val repo        = dbFixtures
     val customerFrm = repo.customerFRM
 
-    val criteron = KeyValue[BigInt]("customer_id", BigInt(1), Operand.EQ)
+    val criteron = KeyValue[Long]("customer_id", 1L, Operand.EQ)
     val criteria = Criteria(List(AND(List(criteron))))
 
     val customers = customerFrm /? criteria
@@ -74,7 +74,13 @@ abstract class TableMapTest()
 
     whenReady(userTypes.unsafeToFuture()) { userTpes =>
       userTpes.size shouldBe 5
-      userTpes.map(_.typeKey) shouldBe List("CST", "CSP", "ENG", "SLF", "ADM")
+      userTpes.map(_.typeKey) should contain allElementsOf List(
+        "CST",
+        "CSP",
+        "ENG",
+        "SLF",
+        "ADM"
+      )
     }
   }
 
@@ -86,7 +92,7 @@ abstract class TableMapTest()
 
     whenReady(carModels.unsafeToFuture()) { models =>
       models.size shouldBe 4
-      models.map(_.modelId.toString()) shouldBe List(
+      models.map(_.modelId.toString()) should contain allElementsOf List(
         "87dd82a8-31fa-41ac-bc6c-c4eec8b6386f",
         "c483a731-6970-41a1-9354-29e23c132667",
         "fb7b56b7-4fb8-4fd0-a561-74870d31d0d2",
