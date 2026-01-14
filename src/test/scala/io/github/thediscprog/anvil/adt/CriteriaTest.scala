@@ -2,8 +2,41 @@ package io.github.thediscprog.anvil.adt
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import io.github.thediscprog.anvil.monitor.AnvilMonitor
+import kamon.metric.Timer.Started
 
 class CriteriaTest extends AnyFlatSpec, Matchers {
+  given monitor: AnvilMonitor = new AnvilMonitor {
+
+    override def selectCall(): Unit = ()
+
+    override def startSelectTimer(): Started = ???
+
+    override def stopTimer(timer: Started): Unit = ()
+
+    override def insertCall(): Unit = ()
+
+    override def startInsertTimer(): Started = ???
+
+    override def updateCall(): Unit = ()
+
+    override def startUpdateTimer(): Started = ???
+
+    override def deleteCall(): Unit = ()
+
+    override def startDeleteTimer(): Started = ???
+
+    override def mismatchPrimaryKeyError(): Unit = ()
+
+    override def unsupportedWhereClause(): Unit = ()
+
+    override def bindingError(): Unit = ()
+
+    override def conversionError(): Unit = ()
+
+    override def memoizationError(): Unit = ()
+
+  }
 
   it should "send an empty string for no where clause" in {
     val clause = Criteria.getWhereClause(List())

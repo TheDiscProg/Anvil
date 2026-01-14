@@ -8,6 +8,8 @@ import org.typelevel.log4cats.SelfAwareStructuredLogger
 import java.sql.ResultSetMetaData
 import org.scalatest.concurrent.ScalaFutures
 import cats.effect.unsafe.implicits.global
+import io.github.thediscprog.anvil.monitor.AnvilMonitor
+import kamon.metric.Timer.Started
 
 class MemoizeTest extends AnyFlatSpec, Matchers, ScalaFutures {
 
@@ -23,6 +25,38 @@ class MemoizeTest extends AnyFlatSpec, Matchers, ScalaFutures {
     whenReady(result) { r =>
       r.getScale(1) shouldBe 99
     }
+  }
+
+  given monitor: AnvilMonitor = new AnvilMonitor {
+
+    override def selectCall(): Unit = ???
+
+    override def startSelectTimer(): Started = ???
+
+    override def stopTimer(timer: Started): Unit = ???
+
+    override def insertCall(): Unit = ???
+
+    override def startInsertTimer(): Started = ???
+
+    override def updateCall(): Unit = ???
+
+    override def startUpdateTimer(): Started = ???
+
+    override def deleteCall(): Unit = ???
+
+    override def startDeleteTimer(): Started = ???
+
+    override def mismatchPrimaryKeyError(): Unit = ???
+
+    override def unsupportedWhereClause(): Unit = ???
+
+    override def bindingError(): Unit = ???
+
+    override def conversionError(): Unit = ???
+
+    override def memoizationError(): Unit = ()
+
   }
 
   val metadata = new ResultSetMetaData() {

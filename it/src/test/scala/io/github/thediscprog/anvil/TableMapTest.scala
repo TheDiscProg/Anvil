@@ -36,6 +36,7 @@ import cats.Monad
 import org.typelevel.log4cats.Logger
 import scala.concurrent.Future
 import io.github.thediscprog.anvil.jdbcutils.JdbcConnection
+import kamon.Kamon
 
 abstract class TableMapTest()
     extends AnyFlatSpec
@@ -43,6 +44,8 @@ abstract class TableMapTest()
     with OptionValues
     with ScalaFutures
     with BeforeAndAfterAll {
+
+  Kamon.init()
 
   given defaultPatience: PatienceConfig =
     PatienceConfig(timeout = Span(20, Seconds), interval = Span(100, Millis))

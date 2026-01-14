@@ -10,6 +10,7 @@ import java.util.BitSet
 import java.time.OffsetTime
 import java.time.OffsetDateTime
 import java.{util => ju}
+import io.github.thediscprog.anvil.monitor.AnvilMonitor
 
 trait JDBCConverter[T] {
 
@@ -69,6 +70,7 @@ object JDBCConverter {
       value match
         case l: Long => l
         case _       =>
+          AnvilMonitor.counter("jdbc.conversion.long")
           throw new RuntimeException(
             s"JDBC ${{ toString() }} Unable to convert from JDBC Object to Scala object"
           )
@@ -81,6 +83,7 @@ object JDBCConverter {
     override def convertToScala(value: Any): Float = value match
       case n: Float => n
       case _        =>
+        AnvilMonitor.counter("jdbc.conversion.float")
         throw new RuntimeException(
           s"JDBC ${{ toString() }} Unable to convert from JDBC Object to Scala object"
         )
@@ -92,6 +95,7 @@ object JDBCConverter {
     override def convertToScala(value: Any): Double = value match
       case n: Double => n
       case _         =>
+        AnvilMonitor.counter("jdbc.conversion.float")
         throw new RuntimeException(
           s"JDBC ${{ toString() }} Unable to convert from JDBC Object to Scala object"
         )
@@ -103,6 +107,7 @@ object JDBCConverter {
     override def convertToScala(value: Any): BigDecimal = value match
       case n: BigDecimal => n
       case _             =>
+        AnvilMonitor.counter("jdbc.conversion.BigDecimal")
         throw new RuntimeException(
           s"JDBC ${{ toString() }} Unable to convert from JDBC Object to Scala object"
         )
@@ -178,6 +183,7 @@ object JDBCConverter {
       value match
         case b: java.sql.Blob => b.getBinaryStream()
         case _                =>
+          AnvilMonitor.counter("jdbc.conversion.InputStream")
           throw new RuntimeException(
             s"JDBC ${{ toString() }} Unable to convert JDBC object ${value} to InputStream"
           )
@@ -192,6 +198,7 @@ object JDBCConverter {
         case nc: java.sql.NClob => nc.getCharacterStream()
         case c: java.sql.Clob   => c.getCharacterStream()
         case _                  =>
+          AnvilMonitor.counter("jdbc.conversion.Reader")
           throw new RuntimeException(
             s"JDBC ${{ toString() }} Unable to convert JDBC object ${value} to Converter"
           )

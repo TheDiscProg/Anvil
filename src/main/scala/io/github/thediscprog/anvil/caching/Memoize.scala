@@ -6,12 +6,13 @@ import com.github.blemale.scaffeine.Scaffeine
 import scala.concurrent.duration._
 import cats.syntax.all.*
 import org.typelevel.log4cats.Logger
+import io.github.thediscprog.anvil.monitor.AnvilMonitor
 
 sealed trait Memoize[K, F[_]] {
 
   def has(k: K): Boolean
 
-  def memoize[V](k: K)(f: K => F[V]): F[V]
+  def memoize[V](k: K)(f: K => F[V])(using monitor: AnvilMonitor): F[V]
 
 }
 
@@ -29,7 +30,7 @@ class CaffeineMemoize[F[_]: {Monad, Logger}] extends Memoize[String, F] {
 
   override def memoize[V](k: String)(
       f: String => F[V]
-  ): F[V] = {
+  )(using monitor: AnvilMonitor): F[V] = {
     val value = cache.getIfPresent(k)
     if (value == null || value.isEmpty) {
       for {
@@ -44,6 +45,7 @@ class CaffeineMemoize[F[_]: {Monad, Logger}] extends Memoize[String, F] {
             .asInstanceOf[V])
             .pure[F]
         case None =>
+          monitor.memoizationError()
           throw new RuntimeException(
             "Memoization function failed to get value for $k"
           )
