@@ -13,7 +13,6 @@ object Dependencies {
   private lazy val mysqlVersion = "9.5.0"
   private lazy val testcontainerVersion = "2.0.1"
   private lazy val kamonVersion = "2.8.0"
-  private lazy val kanelaAgentVersion = "2.0.0"
 
   lazy val all = Seq(
     "com.zaxxer" % "HikariCP" % hikariVersion,
