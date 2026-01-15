@@ -3,7 +3,10 @@ package io.github.thediscprog.anvil.jdbcutils
 import java.sql.Types
 import JDBCReader.*
 import io.github.thediscprog.anvil.dialects.SqlDialect
-import io.github.thediscprog.anvil.monitor.AnvilMonitor
+import io.github.thediscprog.anvil.exceptions.AnvilException.NoReaderFoundError
+import io.github.thediscprog.anvil.exceptions.AnvilMessageKey
+import io.github.thediscprog.anvil.i18n.AnvilMessage
+import io.github.thediscprog.anvil.monitor.{AnvilMetrics, AnvilMonitor}
 
 class JDBCReaderSelector {
 
@@ -86,9 +89,9 @@ class JDBCReaderSelector {
           case Types.TIME_WITH_TIMEZONE      => offsetTimeReader
           case Types.TIMESTAMP_WITH_TIMEZONE => offsetDateTimeStampReader
           case _                             =>
-            AnvilMonitor.counter("anvil.jdbc.reader.reader.notfound")
-            throw new RuntimeException(
-              s"No reader for JDBC type [$jdbcType] found."
+            AnvilMonitor.counter(AnvilMetrics.jdbcReaderNotFound)
+            throw NoReaderFoundError(
+              AnvilMessage(AnvilMessageKey.NoReaderFoundError, Seq(jdbcType))
             )
       }
   }

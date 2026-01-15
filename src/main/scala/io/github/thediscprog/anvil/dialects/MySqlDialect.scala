@@ -1,17 +1,16 @@
 package io.github.thediscprog.anvil.dialects
 
-import java.sql.PreparedStatement
-import io.github.thediscprog.anvil.jdbcutils.JDBCReader
-import java.sql.Types
 import io.github.thediscprog.anvil.jdbcutils.JDBCReader.{
-  byteToUUIDReader,
+  binaryReader,
   bitSetByteArrayReader,
-  binaryReader
+  booleanReader,
+  byteToUUIDReader
 }
+import io.github.thediscprog.anvil.jdbcutils.{JDBCReader, convertBitSet}
+
+import java.sql.{PreparedStatement, Types}
+import java.util.BitSet as JBitSet
 import scala.collection.immutable.BitSet
-import java.util.{BitSet as JBitSet}
-import io.github.thediscprog.anvil.jdbcutils.convertBitSet
-import io.github.thediscprog.anvil.jdbcutils.JDBCReader.booleanReader
 
 class MySqlDialect extends StandardSql {
   override val specialIdentifierCharacter: Char = '`'

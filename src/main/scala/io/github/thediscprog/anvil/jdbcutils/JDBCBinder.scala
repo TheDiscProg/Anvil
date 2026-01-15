@@ -6,8 +6,12 @@ import java.net.URL
 import java.io.InputStream
 import java.io.Reader
 import io.github.thediscprog.anvil.dialects.SqlDialect
+import io.github.thediscprog.anvil.exceptions.AnvilException.BindingError
+import io.github.thediscprog.anvil.exceptions.AnvilMessageKey
+import io.github.thediscprog.anvil.i18n.AnvilMessage
+
 import scala.collection.immutable.BitSet
-import java.util.{BitSet as JBitSet}
+import java.util.BitSet as JBitSet
 import io.github.thediscprog.anvil.monitor.AnvilMonitor
 
 object JDBCBinder {
@@ -97,9 +101,7 @@ object JDBCBinder {
       case Some(value) => matchScalaToJDBC(value, dialect)
       case None        =>
         monitor.bindingError()
-        throw new IllegalArgumentException(
-          "Cannot infer SQL type of empty list"
-        )
+        throw BindingError(AnvilMessage(AnvilMessageKey.BindingEmptyListError))
     }
     val sqlArray = connection.createArrayOf(sqlType, vals.toArray)
     ptst.setArray(index, sqlArray)

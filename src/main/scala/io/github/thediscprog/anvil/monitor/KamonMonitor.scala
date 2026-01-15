@@ -6,44 +6,49 @@ import kamon.metric.Timer.Started
 class KamonMonitor(table: String) extends AnvilMonitor {
 
   override def selectCall(): Unit =
-    Kamon.counter(s"anvil.$table.select").withoutTags().increment()
+    Kamon.counter(AnvilMetrics.select(table)).withoutTags().increment()
 
   override def startSelectTimer(): Started =
-    Kamon.timer(s"anvil.$table.select.timer").withoutTags().start()
+    Kamon.timer(AnvilMetrics.selectTimer(table)).withoutTags().start()
+
   override def insertCall(): Unit =
-    Kamon.counter(s"anvil.$table.insert").withoutTags().increment()
+    Kamon.counter(AnvilMetrics.insert(table)).withoutTags().increment()
+
   override def startInsertTimer(): Started =
-    Kamon.timer(s"anvil.$table.insert.timer").withoutTags().start()
+    Kamon.timer(AnvilMetrics.insertTimer(table)).withoutTags().start()
 
   override def updateCall(): Unit =
-    Kamon.counter(s"anvil.$table.update").withoutTags().increment()
+    Kamon.counter(AnvilMetrics.update(table)).withoutTags().increment()
 
   override def startUpdateTimer(): Started =
-    Kamon.timer(s"anvil.$table.update.timer").withoutTags().start()
+    Kamon.timer(AnvilMetrics.updateTimer(table)).withoutTags().start()
 
   override def deleteCall(): Unit =
-    Kamon.counter(s"anvil.$table.delete").withoutTags().increment()
+    Kamon.counter(AnvilMetrics.delete(table)).withoutTags().increment()
 
   override def startDeleteTimer(): Started =
-    Kamon.timer(s"anvil.$table.delete.timer").withoutTags().start()
+    Kamon.timer(AnvilMetrics.deleteTimer(table)).withoutTags().start()
 
   override def stopTimer(timer: Started): Unit = timer.stop()
 
   override def mismatchPrimaryKeyError(): Unit =
-    Kamon.counter(s"anvil.$table.error.pk.mismatch").withoutTags().increment()
+    Kamon.counter(AnvilMetrics.pkMismatch(table)).withoutTags().increment()
 
   override def unsupportedWhereClause(): Unit = Kamon
-    .counter(s"anvil.$table.error.where.unsupported")
+    .counter(AnvilMetrics.unsupportedWhere(table))
     .withoutTags()
     .increment()
 
   override def bindingError(): Unit =
-    Kamon.counter(s"anvil.$table.error.binding").withoutTags().increment()
+    Kamon.counter(AnvilMetrics.bindingError(table)).withoutTags().increment()
 
   override def conversionError(): Unit =
-    Kamon.counter(s"anvil.$table.error.conversion").withoutTags().increment()
+    Kamon.counter(AnvilMetrics.conversionError(table)).withoutTags().increment()
 
   override def memoizationError(): Unit =
-    Kamon.counter(s"anvil.$table.error.memoization").withoutTags().increment()
+    Kamon
+      .counter(AnvilMetrics.memoizationError(table))
+      .withoutTags()
+      .increment()
 
 }

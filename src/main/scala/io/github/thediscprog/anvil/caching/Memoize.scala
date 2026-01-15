@@ -3,8 +3,11 @@ package io.github.thediscprog.anvil.caching
 import cats.Monad
 import com.github.blemale.scaffeine.Cache
 import com.github.blemale.scaffeine.Scaffeine
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import cats.syntax.all.*
+import io.github.thediscprog.anvil.exceptions.AnvilException
+import io.github.thediscprog.anvil.exceptions.AnvilMessageKey.MemoizationError
+import io.github.thediscprog.anvil.i18n.AnvilMessage
 import org.typelevel.log4cats.Logger
 import io.github.thediscprog.anvil.monitor.AnvilMonitor
 
@@ -46,8 +49,8 @@ class CaffeineMemoize[F[_]: {Monad, Logger}] extends Memoize[String, F] {
             .pure[F]
         case None =>
           monitor.memoizationError()
-          throw new RuntimeException(
-            "Memoization function failed to get value for $k"
+          throw AnvilException.MemoizationError(
+            AnvilMessage(MemoizationError, Seq(k))
           )
     }
   }

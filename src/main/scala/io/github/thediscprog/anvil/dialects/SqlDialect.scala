@@ -1,5 +1,8 @@
 package io.github.thediscprog.anvil.dialects
 
+import io.github.thediscprog.anvil.exceptions.AnvilMessageKey
+import io.github.thediscprog.anvil.i18n.AnvilMessage
+
 import java.sql.PreparedStatement
 import io.github.thediscprog.anvil.jdbcutils.JDBCReader
 
@@ -23,7 +26,10 @@ trait SqlDialect {
 
   def getDBSpecificType(value: Any): String =
     throw new IllegalArgumentException(
-      s"Unsupported database specific type: [${value.getClass()}]"
+      AnvilMessage(
+        AnvilMessageKey.UnsupportedDBTypeError,
+        Seq(value.getClass())
+      )
     )
 
   def bindParameter(

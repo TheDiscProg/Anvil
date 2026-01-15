@@ -1,5 +1,8 @@
 package io.github.thediscprog.anvil.adt
 
+import io.github.thediscprog.anvil.exceptions.AnvilException.UnsupportedWhereClause
+import io.github.thediscprog.anvil.exceptions.AnvilMessageKey
+import io.github.thediscprog.anvil.i18n.AnvilMessage
 import io.github.thediscprog.anvil.monitor.AnvilMonitor
 
 case class Criteria(criteria: List[Where])
@@ -53,8 +56,11 @@ object Criteria {
             }
             case a =>
               monitor.unsupportedWhereClause()
-              throw new RuntimeException(
-                s"Unsupported clause for SQL WHERE: $a"
+              throw UnsupportedWhereClause(
+                AnvilMessage(
+                  AnvilMessageKey.UnsupportedWhereClauseError,
+                  Seq(a)
+                )
               )
 
     }
