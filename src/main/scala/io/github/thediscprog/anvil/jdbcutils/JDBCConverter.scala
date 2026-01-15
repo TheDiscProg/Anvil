@@ -1,5 +1,8 @@
 package io.github.thediscprog.anvil.jdbcutils
 
+import io.github.thediscprog.anvil.exceptions.AnvilException.ConversionError
+import io.github.thediscprog.anvil.exceptions.AnvilMessageKey
+import io.github.thediscprog.anvil.i18n.AnvilMessage
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -9,8 +12,8 @@ import java.io.Reader
 import java.util.BitSet
 import java.time.OffsetTime
 import java.time.OffsetDateTime
-import java.{util => ju}
-import io.github.thediscprog.anvil.monitor.AnvilMonitor
+import java.util as ju
+import io.github.thediscprog.anvil.monitor.{AnvilMetrics, AnvilMonitor}
 
 trait JDBCConverter[T] {
 
@@ -70,9 +73,9 @@ object JDBCConverter {
       value match
         case l: Long => l
         case _       =>
-          AnvilMonitor.counter("jdbc.conversion.long")
-          throw new RuntimeException(
-            s"JDBC ${{ toString() }} Unable to convert from JDBC Object to Scala object"
+          AnvilMonitor.counter(AnvilMetrics.typeConversionError("long"))
+          throw ConversionError(
+            AnvilMessage(AnvilMessageKey.ConversionError, Seq(toString()))
           )
     }
   }
@@ -83,9 +86,9 @@ object JDBCConverter {
     override def convertToScala(value: Any): Float = value match
       case n: Float => n
       case _        =>
-        AnvilMonitor.counter("jdbc.conversion.float")
-        throw new RuntimeException(
-          s"JDBC ${{ toString() }} Unable to convert from JDBC Object to Scala object"
+        AnvilMonitor.counter(AnvilMetrics.typeConversionError("float"))
+        throw ConversionError(
+          AnvilMessage(AnvilMessageKey.ConversionError, Seq(toString()))
         )
   }
 
@@ -95,9 +98,9 @@ object JDBCConverter {
     override def convertToScala(value: Any): Double = value match
       case n: Double => n
       case _         =>
-        AnvilMonitor.counter("jdbc.conversion.float")
-        throw new RuntimeException(
-          s"JDBC ${{ toString() }} Unable to convert from JDBC Object to Scala object"
+        AnvilMonitor.counter(AnvilMetrics.typeConversionError("double"))
+        throw ConversionError(
+          AnvilMessage(AnvilMessageKey.ConversionError, Seq(toString()))
         )
   }
 
@@ -107,9 +110,9 @@ object JDBCConverter {
     override def convertToScala(value: Any): BigDecimal = value match
       case n: BigDecimal => n
       case _             =>
-        AnvilMonitor.counter("jdbc.conversion.BigDecimal")
-        throw new RuntimeException(
-          s"JDBC ${{ toString() }} Unable to convert from JDBC Object to Scala object"
+        AnvilMonitor.counter(AnvilMetrics.typeConversionError("BigDecimal"))
+        throw ConversionError(
+          AnvilMessage(AnvilMessageKey.ConversionError, Seq(toString()))
         )
   }
 
@@ -183,9 +186,9 @@ object JDBCConverter {
       value match
         case b: java.sql.Blob => b.getBinaryStream()
         case _                =>
-          AnvilMonitor.counter("jdbc.conversion.InputStream")
-          throw new RuntimeException(
-            s"JDBC ${{ toString() }} Unable to convert JDBC object ${value} to InputStream"
+          AnvilMonitor.counter(AnvilMetrics.typeConversionError("InputStream"))
+          throw ConversionError(
+            AnvilMessage(AnvilMessageKey.ConversionError, Seq(toString()))
           )
 
   }
@@ -198,9 +201,9 @@ object JDBCConverter {
         case nc: java.sql.NClob => nc.getCharacterStream()
         case c: java.sql.Clob   => c.getCharacterStream()
         case _                  =>
-          AnvilMonitor.counter("jdbc.conversion.Reader")
-          throw new RuntimeException(
-            s"JDBC ${{ toString() }} Unable to convert JDBC object ${value} to Converter"
+          AnvilMonitor.counter(AnvilMetrics.typeConversionError("Reader"))
+          throw ConversionError(
+            AnvilMessage(AnvilMessageKey.ConversionError, Seq(toString()))
           )
 
   }

@@ -7,15 +7,21 @@ import java.sql.ResultSet
 import cats.Monad
 import cats.implicits.*
 import org.typelevel.log4cats.Logger
+
 import java.sql.PreparedStatement
 import java.sql.ResultSetMetaData
 import io.github.thediscprog.anvil.caching.Memoize
 import io.github.thediscprog.anvil.caching.CaffeineMemoize
 import io.github.thediscprog.anvil.annotations.PrimaryKeyAnnotation
 import io.github.thediscprog.anvil.dialects.SqlDialect
+import io.github.thediscprog.anvil.exceptions.AnvilException.MappingError
+import io.github.thediscprog.anvil.exceptions.AnvilMessageKey
+import io.github.thediscprog.anvil.i18n.AnvilMessage
 import io.github.thediscprog.anvil.macros.ProductMacro.*
+
 import scala.reflect.ClassTag
 import io.github.thediscprog.anvil.jdbcutils.*
+
 import java.sql.Types
 import io.github.thediscprog.anvil.monitor.AnvilMonitor
 
@@ -363,8 +369,8 @@ object TableMapping {
           )
           if (caseClassLabels.size != tableProps.columnNames.size) {
             monitor.mismatchPrimaryKeyError()
-            throw new RuntimeException(
-              s"There is a mismatch in the number of columns defined in the table properties with mapping case class."
+            throw MappingError(
+              AnvilMessage(AnvilMessageKey.ColumnMismatchError)
             )
           }
           val zippedLabels = caseClassLabels.zip(tableProps.columnNames)
