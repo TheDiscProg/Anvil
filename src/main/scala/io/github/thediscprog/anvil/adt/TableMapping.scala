@@ -17,6 +17,7 @@ import io.github.thediscprog.anvil.macros.ProductMacro.*
 import scala.reflect.ClassTag
 import io.github.thediscprog.anvil.jdbcutils.*
 import java.sql.Types
+import io.github.thediscprog.anvil.monitor.AnvilMonitor
 
 sealed trait TableMapping[F[_], A <: Product](
     val properties: TableProperties,
@@ -64,6 +65,8 @@ object TableMapping {
 
     new TableMapping[F, A](tableProps, dbConnection) {
 
+      given monitor: AnvilMonitor = AnvilMonitor.getMonitor(tableProps.table)
+
       val dialect = SqlDialect.getDialect(tableProps.dialect)
 
       val metaDataCache               = s"${tableProps.cachingKey}-rsmd"
@@ -103,6 +106,7 @@ object TableMapping {
           _ <- Logger[F].info(
             s"TableMapping - table: ${properties.table}, INSERT:[$insertStmt]"
           )
+          timer = monitor.startInsertTimer()
           stmt <- (connection.prepareStatement(insertStmt)).pure[F]
           _    <- (bindParameters(
             stmt,
@@ -112,7 +116,9 @@ object TableMapping {
           ))
             .pure[F]
           result <- (stmt.executeUpdate()).pure[F]
+          _ = monitor.stopTimer(timer)
           _ <- Logger[F].debug(s"* * * TableMapping: Insert Finished * * *")
+          _ = monitor.insertCall()
         } yield result
       }
 
@@ -152,7 +158,8 @@ object TableMapping {
           statement: PreparedStatement = connection.prepareStatement(
             selectStatement
           )
-          _ = bindParameters(
+          timer = monitor.startSelectTimer()
+          _     = bindParameters(
             statement,
             whereClause._2,
             connection,
@@ -166,6 +173,7 @@ object TableMapping {
             reader,
             dialect
           )
+          _ = monitor.stopTimer(timer)
           _ <- Logger[F].debug(
             s"==== Column Descriptors: [${columnDescriptors}] ===="
           )
@@ -174,6 +182,7 @@ object TableMapping {
           _ <- Logger[F].debug(
             s"* * * TableMapping: Finished Filter on ${properties.table} * * *"
           )
+          _ = monitor.selectCall()
         } yield result
 
       override def deleteWhere(criteria: Criteria): F[Int] = {
@@ -187,7 +196,8 @@ object TableMapping {
             s"* * * TableMapping: Table: [${properties.table}], Delete: [$deleteStmt] * * *"
           )
           preparedStmt <- (connection.prepareStatement(deleteStmt)).pure[F]
-          _            <- bindParameters(
+          timer = monitor.startDeleteTimer()
+          _ <- bindParameters(
             preparedStmt,
             whereClause._2,
             connection,
@@ -195,9 +205,11 @@ object TableMapping {
           )
             .pure[F]
           numberUpdated <- (preparedStmt.executeUpdate()).pure[F]
-          _             <- Logger[F].debug(
+          _ = monitor.stopTimer(timer)
+          _ <- Logger[F].debug(
             s"* * * TableMapping: Finished Deleting from ${properties.table} * * *"
           )
+          _ = monitor.deleteCall()
         } yield numberUpdated
       }
 
@@ -220,16 +232,19 @@ object TableMapping {
             s"* * * TableMapping: Table: [${properties.table}], Update: [$updateStmt] * * *"
           )
           preparedStmt <- (connection.prepareStatement(updateStmt)).pure[F]
-          _            <- (bindParameters(
+          timer = monitor.startUpdateTimer()
+          _ <- (bindParameters(
             preparedStmt,
             newValues ++ whereClause._2,
             connection,
             dialect
           )).pure[F]
           result <- (preparedStmt.executeUpdate()).pure[F]
-          _      <- Logger[F].debug(
+          _ = monitor.stopTimer(timer)
+          _ <- Logger[F].debug(
             s"* * * TableMapping: FinishedUpdating ${properties.table} * * *"
           )
+          _ = monitor.updateCall()
         } yield result
       }
 
@@ -347,6 +362,7 @@ object TableMapping {
             caseClassLabels.indexOf(column)
           )
           if (caseClassLabels.size != tableProps.columnNames.size) {
+            monitor.mismatchPrimaryKeyError()
             throw new RuntimeException(
               s"There is a mismatch in the number of columns defined in the table properties with mapping case class."
             )

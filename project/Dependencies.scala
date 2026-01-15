@@ -12,9 +12,13 @@ object Dependencies {
   private lazy val postgresVersion = "42.7.8"
   private lazy val mysqlVersion = "9.5.0"
   private lazy val testcontainerVersion = "2.0.1"
+  private lazy val kamonVersion = "2.8.0"
+  private lazy val kanelaAgentVersion = "2.0.0"
 
   lazy val all = Seq(
     "com.zaxxer" % "HikariCP" % hikariVersion,
+    "io.kamon" %% "kamon-core" % kamonVersion,
+    "io.kamon" %% "kamon-jdbc" % kamonVersion,
     "org.typelevel" %% "log4cats-core"    % log4catsVersion,
     "org.typelevel" %% "log4cats-slf4j"   % log4catsVersion,
     "org.typelevel" %% "cats-effect" % catsEffectVersion,

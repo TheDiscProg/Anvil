@@ -8,6 +8,7 @@ import java.io.Reader
 import io.github.thediscprog.anvil.dialects.SqlDialect
 import scala.collection.immutable.BitSet
 import java.util.{BitSet as JBitSet}
+import io.github.thediscprog.anvil.monitor.AnvilMonitor
 
 object JDBCBinder {
 
@@ -16,7 +17,7 @@ object JDBCBinder {
       params: List[Any],
       connection: Connection,
       dialect: SqlDialect
-  ): Unit = {
+  )(using monitor: AnvilMonitor): Unit = {
     params.zipWithIndex.map { (value, idx) =>
       bindParameter(ptst, value, idx + 1, connection, dialect)
     }
@@ -28,7 +29,7 @@ object JDBCBinder {
       index: Int,
       connection: Connection,
       dialect: SqlDialect
-  ): Unit = {
+  )(using monitor: AnvilMonitor): Unit = {
     val isVendorBinding = dialect.bindParameter(ptst, value, index)
     if (printDebugInfo) then
       println(s"Binding parameter index: $index: [$isVendorBinding]")
@@ -91,10 +92,11 @@ object JDBCBinder {
       index: Int,
       connection: Connection,
       dialect: SqlDialect
-  ): Unit = {
+  )(using monitor: AnvilMonitor): Unit = {
     val sqlType = vals.headOption match {
       case Some(value) => matchScalaToJDBC(value, dialect)
       case None        =>
+        monitor.bindingError()
         throw new IllegalArgumentException(
           "Cannot infer SQL type of empty list"
         )

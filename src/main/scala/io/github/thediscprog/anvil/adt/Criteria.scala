@@ -1,5 +1,7 @@
 package io.github.thediscprog.anvil.adt
 
+import io.github.thediscprog.anvil.monitor.AnvilMonitor
+
 case class Criteria(criteria: List[Where])
 
 object Criteria {
@@ -11,7 +13,9 @@ object Criteria {
     case IN   extends CONDITION("IN")
   }
 
-  def getWhereClause(criteria: List[Where]): (String, List[Any]) = {
+  def getWhereClause(
+      criteria: List[Where]
+  )(using monitor: AnvilMonitor): (String, List[Any]) = {
     if (criteria.isEmpty) {
       ("", List())
     } else {
@@ -20,7 +24,9 @@ object Criteria {
     }
   }
 
-  private def extractClauses(criteria: List[Where]): (String, Array[Any]) = {
+  private def extractClauses(
+      criteria: List[Where]
+  )(using monitor: AnvilMonitor): (String, Array[Any]) = {
     def loop(
         crit: List[Where],
         whereAcc: Array[String],
@@ -46,6 +52,7 @@ object Criteria {
               loop(next, whereAcc ++ Array(in), argAcc ++ extracted)
             }
             case a =>
+              monitor.unsupportedWhereClause()
               throw new RuntimeException(
                 s"Unsupported clause for SQL WHERE: $a"
               )
