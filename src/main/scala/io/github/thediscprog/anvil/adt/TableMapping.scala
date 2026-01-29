@@ -25,7 +25,7 @@ import io.github.thediscprog.anvil.jdbcutils.*
 import java.sql.Types
 import io.github.thediscprog.anvil.monitor.AnvilMonitor
 
-sealed trait TableMapping[F[_], A <: Product](
+trait TableMapping[F[_], A <: Product](
     val properties: TableProperties,
     val connection: Connection
 ) {
