@@ -1,13 +1,13 @@
 package io.github.thediscprog.anvil.frm
 
-import io.github.thediscprog.anvil.adt.TableMapping
 import cats.Monad
-import org.typelevel.log4cats.Logger
-import java.sql.Connection
+import cats.effect.kernel.Sync
+import io.github.thediscprog.anvil.adt.{TableMapping, TableProperties}
+import io.github.thediscprog.anvil.annotations.{PrimaryKey, PrimaryKeyType}
 import io.github.thediscprog.anvil.dialects.DbVendor
-import io.github.thediscprog.anvil.adt.TableProperties
-import io.github.thediscprog.anvil.annotations.PrimaryKey
-import io.github.thediscprog.anvil.annotations.PrimaryKeyType
+import org.typelevel.log4cats.Logger
+
+import javax.sql.DataSource
 
 @PrimaryKey(PrimaryKeyType.SINGLE, List("typeKey"), false)
 final case class UserType(
@@ -26,9 +26,9 @@ object UserType {
     columnNames = Seq("type_key", "title", "description")
   )
 
-  def userTypeFrm[F[_]: {Monad, Logger}](
-      connection: Connection,
+  def userTypeFrm[F[_]: {Monad, Logger, Sync}](
+      dataSource: DataSource,
       vendor: DbVendor
   ) =
-    TableMapping.getFRM[F, UserType](userTypeProperties(vendor), connection)
+    TableMapping.getFRM[F, UserType](userTypeProperties(vendor), dataSource)
 }

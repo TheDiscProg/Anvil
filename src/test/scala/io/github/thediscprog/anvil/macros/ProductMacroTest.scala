@@ -12,18 +12,20 @@ class ProductMacroTest extends AnyFlatSpec, Matchers {
   it should "get a list of case class field label and type as a string" in {
     val labelsAndTypes = ProductMacro.getFieldLabelAndTypes[TestClass]
 
-    labelsAndTypes shouldBe List(
-      ("anInt", "Int"),
-      ("aLong", "Long"),
-      ("aShort", "Short"),
-      ("aByte", "Byte"),
-      ("aBoolean", "Boolean"),
-      ("aChar", "Char"),
-      ("aString", "String"),
-      ("anID", "UUID"),
-      ("time", "LocalTime"),
-      ("date", "LocalDate"),
-      ("dateTime", "LocalDateTime")
+    labelsAndTypes should be(
+      List(
+        ("anInt", "Int"),
+        ("aLong", "Long"),
+        ("aShort", "Short"),
+        ("aByte", "Byte"),
+        ("aBoolean", "Boolean"),
+        ("aChar", "Char"),
+        ("aString", "String"),
+        ("anID", "UUID"),
+        ("time", "LocalTime"),
+        ("date", "LocalDate"),
+        ("dateTime", "LocalDateTime")
+      )
     )
   }
 

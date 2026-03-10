@@ -23,7 +23,7 @@ class MemoizeTest extends AnyFlatSpec, Matchers, ScalaFutures {
       (memoizeFunction.memoize("key")(_ => IO(metadata))).unsafeToFuture()
 
     whenReady(result) { r =>
-      r.getScale(1) shouldBe 99
+      r.getScale(1) should be(99)
     }
   }
 

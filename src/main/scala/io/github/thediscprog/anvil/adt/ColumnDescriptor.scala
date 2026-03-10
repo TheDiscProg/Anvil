@@ -25,7 +25,7 @@ object ColumnDescriptor {
       fieldTypes: List[(String, String)],
       readerSelector: JDBCReaderSelector,
       dialect: SqlDialect
-  ) = {
+  ): Seq[ColumnDescriptor] = {
     for index <- 1 to metadata.getColumnCount
     yield new ColumnDescriptor(
       index = index,

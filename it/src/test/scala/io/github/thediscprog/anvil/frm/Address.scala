@@ -1,14 +1,13 @@
 package io.github.thediscprog.anvil.frm
 
-import io.github.thediscprog.anvil.annotations.PrimaryKey
-import io.github.thediscprog.anvil.annotations.PrimaryKeyType
-import io.github.thediscprog.anvil.adt.TableProperties
-import io.github.thediscprog.anvil.dialects.DbVendor
 import cats.Monad
+import cats.effect.kernel.Sync
+import io.github.thediscprog.anvil.adt.{TableMapping, TableProperties}
+import io.github.thediscprog.anvil.annotations.{PrimaryKey, PrimaryKeyType}
+import io.github.thediscprog.anvil.dialects.DbVendor
 import org.typelevel.log4cats.Logger
-import java.sql.Connection
-import io.github.thediscprog.anvil.adt.TableMapping
-import io.github.thediscprog.anvil.dialects.SqlDialect
+
+import javax.sql.DataSource
 
 @PrimaryKey(PrimaryKeyType.SINGLE, List("addressId"), false)
 final case class Address(
@@ -30,9 +29,9 @@ object Address {
       Seq("address_id", "street", "town", "county", "post_code", "country")
   )
 
-  def addressFrm[F[_]: {Monad, Logger}](
-      connection: Connection,
+  def addressFrm[F[_]: {Monad, Logger, Sync}](
+      dataSource: DataSource,
       vendor: DbVendor
   ) =
-    TableMapping.getFRM[F, Address](addressProperties(vendor), connection)
+    TableMapping.getFRM[F, Address](addressProperties(vendor), dataSource)
 }

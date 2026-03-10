@@ -1,25 +1,15 @@
 package io.github.thediscprog.anvil
 
 import cats.effect.IO
-import com.zaxxer.hikari.HikariConfig
-import io.github.thediscprog.anvil.jdbcutils.JdbcConnection
-import org.testcontainers.utility.{DockerImageName, MountableFile}
-import org.testcontainers.mysql.MySQLContainer
-import io.github.thediscprog.anvil.adt.Criteria
 import cats.effect.unsafe.implicits.global
+import com.zaxxer.hikari.HikariConfig
+import io.github.thediscprog.anvil.adt.{AND, Criteria, KeyValue}
 import io.github.thediscprog.anvil.dialects.DbVendor
-import io.github.thediscprog.anvil.frm.Customer
-import java.time.LocalDate
-import io.github.thediscprog.anvil.frm.Address
-import io.github.thediscprog.anvil.adt.KeyValue
-import io.github.thediscprog.anvil.adt.Operand
-import io.github.thediscprog.anvil.adt.AND
-import io.github.thediscprog.anvil.frm.CustomerAddress
 import io.github.thediscprog.anvil.frm.MySQLDataTypes
+import io.github.thediscprog.anvil.jdbcutils.JdbcConnection.getHikariDataSource
+import org.testcontainers.mysql.MySQLContainer
+import org.testcontainers.utility.DockerImageName
 import java.time.LocalDateTime
-import io.github.thediscprog.anvil.frm.UserType
-import java.util.UUID
-import io.github.thediscprog.anvil.frm.User
 
 class MySQLTableMappingTest extends TableMapTest {
 
@@ -38,8 +28,9 @@ class MySQLTableMappingTest extends TableMapTest {
     config.setJdbcUrl(dbUrl)
     config.setUsername(username)
     config.setPassword(password)
+    val ds = getHikariDataSource(config)
     new DatabaseFixture[IO](
-      JdbcConnection.openJdbcConnection(config),
+      ds,
       DbVendor.MYSQL
     )
   }
@@ -53,10 +44,9 @@ class MySQLTableMappingTest extends TableMapTest {
   }
 
   it should "handle all different MySQL data types" in {
-    val connection = dbFixtures.jdbcCon
-    val frm        = MySQLDataTypes.mysqlDataTypesFRM[IO](connection)
-    val now        = LocalDateTime.now()
-    val criteria   = Criteria(List(AND(List(KeyValue("col_datetime", now)))))
+    val frm = MySQLDataTypes.mysqlDataTypesFRM[IO](dbFixtures.getDataSource)
+    val now = LocalDateTime.now()
+    val criteria = Criteria(List(AND(List(KeyValue("col_datetime", now)))))
 
     val result =
       for {
@@ -70,9 +60,9 @@ class MySQLTableMappingTest extends TableMapTest {
       } yield (row, added, rows)
 
     whenReady(result.unsafeToFuture()) { (row, added, rows) =>
-      row.colBigInt.value shouldBe 1234567890123L
-      added shouldBe 1
-      rows.size shouldBe 2
+      row.colBigInt.value should be(1234567890123L)
+      added should be(1)
+      rows.size should be(2)
     }
   }
 }

@@ -1,42 +1,20 @@
 package io.github.thediscprog.anvil
 
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+import io.github.thediscprog.anvil.adt.{AND, Criteria, KeyValue, Operand}
+import io.github.thediscprog.anvil.frm.*
+import kamon.Kamon
+import org.scalatest.{BeforeAndAfterAll, OptionValues}
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.OptionValues
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.Span
-import org.scalatest.time.Seconds
-import org.scalatest.time.Millis
-import org.typelevel.log4cats.SelfAwareLogger
+import org.scalatest.time.{Millis, Seconds, Span}
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import cats.effect.IO
-import org.testcontainers.postgresql.PostgreSQLContainer
-import org.testcontainers.utility.DockerImageName
-import org.scalatest.BeforeAndAfterAll
-import com.zaxxer.hikari.HikariConfig
-import java.sql.Connection
-import org.testcontainers.utility.MountableFile
-import io.github.thediscprog.anvil.frm.*
-import io.github.thediscprog.anvil.adt.TableMapping
-import io.github.thediscprog.anvil.adt.KeyValue
-import io.github.thediscprog.anvil.adt.Criteria
-import io.github.thediscprog.anvil.adt.AND
-import io.github.thediscprog.anvil.adt.Operand
-import cats.effect.unsafe.implicits.global
-import org.scalatest.OptionValues
-import java.time.LocalDate
+
+import java.time.{LocalDate, LocalDateTime}
 import java.util.UUID
-import java.time.LocalDateTime
-import cats.Monad
-import org.typelevel.log4cats.Logger
-import scala.concurrent.Future
-import io.github.thediscprog.anvil.jdbcutils.JdbcConnection
-import kamon.Kamon
 
 abstract class TableMapTest()
     extends AnyFlatSpec
@@ -65,7 +43,7 @@ abstract class TableMapTest()
     val customers = customerFrm /? criteria
 
     whenReady(customers.unsafeToFuture()) { cstm =>
-      cstm.isDefined shouldBe true
+      cstm.isDefined should be(true)
     }
   }
 
@@ -76,7 +54,7 @@ abstract class TableMapTest()
     val userTypes = userTypeFrm.filter(Criteria(List()))
 
     whenReady(userTypes.unsafeToFuture()) { userTpes =>
-      userTpes.size shouldBe 5
+      userTpes.size should be(5)
       userTpes.map(_.typeKey) should contain allElementsOf List(
         "CST",
         "CSP",
@@ -94,7 +72,7 @@ abstract class TableMapTest()
     val carModels = frm.filter(Criteria(List()), true)
 
     whenReady(carModels.unsafeToFuture()) { models =>
-      models.size shouldBe 4
+      models.size should be(4)
       models.map(_.modelId.toString()) should contain allElementsOf List(
         "87dd82a8-31fa-41ac-bc6c-c4eec8b6386f",
         "c483a731-6970-41a1-9354-29e23c132667",
@@ -187,11 +165,11 @@ abstract class TableMapTest()
     whenReady(result.unsafeToFuture()) { (ac, aa, ncaa, uc, dca, da, dc) =>
       ac.value.contactEmail shouldBe andrewS.contactEmail
       aa.value.postCode shouldBe addressAS.postCode
-      ncaa shouldBe 1
+      ncaa should be(1)
       uc.value.comment.value shouldBe "New permanent customer"
-      dca shouldBe 1
-      da shouldBe 1
-      dc shouldBe 1
+      dca should be(1)
+      da should be(1)
+      dc should be(1)
     }
 
   }
@@ -275,13 +253,13 @@ abstract class TableMapTest()
           droppedUT,
           droppedCust
       ) =>
-        userTypeAdded shouldBe 1
-        typeAdded shouldBe 1
+        userTypeAdded should be(1)
+        typeAdded should be(1)
         customer.value.contactEmail shouldBe andrewS.contactEmail
-        userAdded shouldBe 1
-        droppedUsr shouldBe 1
-        droppedUT shouldBe 1
-        droppedCust shouldBe 1
+        userAdded should be(1)
+        droppedUsr should be(1)
+        droppedUT should be(1)
+        droppedCust should be(1)
     }
 
   }

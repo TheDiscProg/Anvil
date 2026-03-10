@@ -1,21 +1,15 @@
 package io.github.thediscprog.anvil.frm
 
-import io.github.thediscprog.anvil.adt.TableProperties
-import io.github.thediscprog.anvil.dialects.DbVendor
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.LocalDateTime
-import java.time.Duration
-import java.time.OffsetDateTime
-import java.time.OffsetTime
-import java.util.UUID
-import java.util.BitSet
-import io.github.thediscprog.anvil.adt.TableMapping
-import java.sql.Connection
 import cats.Monad
+import cats.effect.kernel.Sync
+import io.github.thediscprog.anvil.adt.{TableMapping, TableProperties}
+import io.github.thediscprog.anvil.annotations.{PrimaryKey, PrimaryKeyType}
+import io.github.thediscprog.anvil.dialects.DbVendor
 import org.typelevel.log4cats.Logger
-import io.github.thediscprog.anvil.annotations.PrimaryKey
-import io.github.thediscprog.anvil.annotations.PrimaryKeyType
+
+import java.time.*
+import java.util.{BitSet, UUID}
+import javax.sql.DataSource
 
 @PrimaryKey(
   PrimaryKeyType.COMPOSITE,
@@ -167,6 +161,8 @@ object PostgresDataTypes {
     )
   )
 
-  def postgresDataTypesFrm[F[_]: {Monad, Logger}](connection: Connection) =
-    TableMapping.getFRM[F, PostgresDataTypes](tableProperties, connection)
+  def postgresDataTypesFrm[F[_]: {Monad, Logger, Sync}](
+      dataSource: DataSource
+  ) =
+    TableMapping.getFRM[F, PostgresDataTypes](tableProperties, dataSource)
 }
