@@ -1,34 +1,28 @@
 package io.github.thediscprog.anvil.adt
 
-import java.sql.Connection
-import scala.deriving.Mirror
-import scala.annotation.nowarn
-import java.sql.ResultSet
 import cats.Monad
+import cats.effect.{Resource, Sync}
 import cats.implicits.*
-import org.typelevel.log4cats.Logger
-
-import java.sql.PreparedStatement
-import java.sql.ResultSetMetaData
-import io.github.thediscprog.anvil.caching.Memoize
-import io.github.thediscprog.anvil.caching.CaffeineMemoize
 import io.github.thediscprog.anvil.annotations.PrimaryKeyAnnotation
+import io.github.thediscprog.anvil.caching.{CaffeineMemoize, Memoize}
 import io.github.thediscprog.anvil.dialects.SqlDialect
 import io.github.thediscprog.anvil.exceptions.AnvilException.MappingError
 import io.github.thediscprog.anvil.exceptions.AnvilMessageKey
 import io.github.thediscprog.anvil.i18n.AnvilMessage
-import io.github.thediscprog.anvil.macros.ProductMacro.*
-
-import scala.reflect.ClassTag
 import io.github.thediscprog.anvil.jdbcutils.*
-
-import java.sql.Types
+import io.github.thediscprog.anvil.macros.ProductMacro.*
 import io.github.thediscprog.anvil.monitor.AnvilMonitor
+import org.typelevel.log4cats.Logger
+import java.sql.{Array as _, *}
+import javax.sql.DataSource
+import scala.annotation.nowarn
+import scala.deriving.Mirror
 
 trait TableMapping[F[_], A <: Product](
-    val properties: TableProperties,
-    val connection: Connection
+    val properties: TableProperties
 ) {
+
+  def withConnection[B](f: Connection => F[B]): F[B]
 
   def transactional[R](f: () => F[R]): F[R]
 
@@ -63,13 +57,13 @@ object TableMapping {
   import JDBCBinder.*
 
   @nowarn
-  inline def getFRM[F[_]: {Monad, Logger}, A <: Product](
+  inline def getFRM[F[_]: {Monad, Logger, Sync}, A <: Product](
       tableProps: TableProperties,
-      dbConnection: Connection,
+      dataSource: DataSource,
       reader: JDBCReaderSelector = new JDBCReaderSelector()
   )(using m: Mirror.ProductOf[A]): TableMapping[F, A] = {
 
-    new TableMapping[F, A](tableProps, dbConnection) {
+    new TableMapping[F, A](tableProps) {
 
       given monitor: AnvilMonitor = AnvilMonitor.getMonitor(tableProps.table)
 
@@ -86,49 +80,58 @@ object TableMapping {
 
       val fieldMap = getFieldLabelAndTypes[A]
 
-      override def transactional[R](f: () => F[R]): F[R] =
-        for {
-          _ <- Logger[F].debug(
-            s"* * * TableMapping: Running Transactional on ${properties.table} using ${properties.dialect} * * *"
-          )
-          autoCommitFlag = connection.getAutoCommit()
-          _              = connection.setAutoCommit(false)
-          result <- f()
-          _ = connection.commit()
-          _ = connection.setAutoCommit(autoCommitFlag)
-          _ <- Logger[F].debug(
-            s"* * * TableMapping: Finished Transactional on ${properties.table} using ${properties.dialect} * * *"
-          )
-        } yield result
-
-      override def add(a: A): F[Int] = {
-        val columns    = getColumnLabels(excludePK = true)
-        val values     = getProductValues(a)
-        val insertStmt = dialect.insert(columns, tableProps.table, values)
-        for {
-          _ <- Logger[F].debug(
-            s"* * * TableMapping: Insert on ${properties.table} using ${properties.dialect} * * *"
-          )
-          _ <- Logger[F].info(
-            s"TableMapping - table: ${properties.table}, INSERT:[$insertStmt]"
-          )
-          timer = monitor.startInsertTimer()
-          stmt <- (connection.prepareStatement(insertStmt)).pure[F]
-          _    <- (bindParameters(
-            stmt,
-            values.toList,
-            connection,
-            dialect
-          ))
-            .pure[F]
-          result <- (stmt.executeUpdate()).pure[F]
-          _ = monitor.stopTimer(timer)
-          _ <- Logger[F].debug(s"* * * TableMapping: Insert Finished * * *")
-          _ = monitor.insertCall()
-        } yield result
+      override def transactional[R](f: () => F[R]): F[R] = {
+        this.withConnection { connection =>
+          {
+            for {
+              _ <- Logger[F].debug(
+                s"* * * TableMapping: Running Transactional on ${properties.table} using ${properties.dialect} * * *"
+              )
+              autoCommitFlag = connection.getAutoCommit()
+              _              = connection.setAutoCommit(false)
+              result <- f()
+              _ = connection.commit()
+              _ = connection.setAutoCommit(autoCommitFlag)
+              _ <- Logger[F].debug(
+                s"* * * TableMapping: Finished Transactional on ${properties.table} using ${properties.dialect} * * *"
+              )
+            } yield result
+          }
+        }
       }
 
-      override def headOption(criteria: Criteria): F[Option[A]] =
+      override def add(a: A): F[Int] = {
+        this.withConnection { connection =>
+          {
+            val columns    = getColumnLabels(excludePK = true)
+            val values     = getProductValues(a)
+            val insertStmt = dialect.insert(columns, tableProps.table, values)
+            for {
+              _ <- Logger[F].debug(
+                s"* * * TableMapping: Insert on ${properties.table} using ${properties.dialect} * * *"
+              )
+              _ <- Logger[F].info(
+                s"TableMapping - table: ${properties.table}, INSERT:[$insertStmt]"
+              )
+              timer = monitor.startInsertTimer()
+              stmt <- (connection.prepareStatement(insertStmt)).pure[F]
+              _    <- (bindParameters(
+                stmt,
+                values.toList,
+                connection,
+                dialect
+              ))
+                .pure[F]
+              result <- (stmt.executeUpdate()).pure[F]
+              _ = monitor.stopTimer(timer)
+              _ <- Logger[F].debug(s"* * * TableMapping: Insert Finished * * *")
+              _ = monitor.insertCall()
+            } yield result
+          }
+        }
+      }
+
+      override def headOption(criteria: Criteria): F[Option[A]] = {
         for {
           _ <- Logger[F].debug(
             s"* * * TableMapping: Running getOne on ${properties.table} using ${properties.dialect} * * *"
@@ -141,125 +144,144 @@ object TableMapping {
             s"* * * TableMapping: Finished running getOne on ${properties.table} * * *"
           )
         } yield result
+      }
 
       override def filter(
           criteria: Criteria,
           distinct: Boolean = false
-      ): F[List[A]] =
-        for {
-          _ <- Logger[F].debug(
-            s"* * * TableMapping: Filter on ${properties.table} using ${properties.dialect} * * *"
-          )
-          columns = getColumnLabels(excludePK = false)
-          _ <- Logger[F].debug(s"TableMapping: Columns: [$columns]")
-          whereClause     = Criteria.getWhereClause(criteria.criteria)
-          selectStatement =
-            if (distinct)
-              dialect.filterDistinct(columns, properties.table, whereClause._1)
-            else
-              dialect.filter(columns, properties.table, whereClause._1)
-          _ <- Logger[F].info(
-            s"* * * * TableMapping: Table: [${properties.table}], Query: [$selectStatement]"
-          )
-          statement: PreparedStatement = connection.prepareStatement(
-            selectStatement
-          )
-          timer = monitor.startSelectTimer()
-          _     = bindParameters(
-            statement,
-            whereClause._2,
-            connection,
-            dialect
-          )
-          metadata <- getResultSetMetaData(statement)
-          resultSet         = statement.executeQuery()
-          columnDescriptors = ColumnDescriptor.getColumnInformation(
-            metadata,
-            fieldMap,
-            reader,
-            dialect
-          )
-          _ = monitor.stopTimer(timer)
-          _ <- Logger[F].debug(
-            s"==== Column Descriptors: [${columnDescriptors}] ===="
-          )
-          result <- convertResultSet(columnDescriptors.toList, resultSet)
-            .pure[F]
-          _ <- Logger[F].debug(
-            s"* * * TableMapping: Finished Filter on ${properties.table} * * *"
-          )
-          _ = monitor.selectCall()
-        } yield result
+      ): F[List[A]] = {
+        this.withConnection { connection =>
+          {
+            for {
+              _ <- Logger[F].debug(
+                s"* * * TableMapping: Filter on ${properties.table} using ${properties.dialect} * * *"
+              )
+              columns = getColumnLabels(excludePK = false)
+              _ <- Logger[F].debug(s"TableMapping: Columns: [$columns]")
+              whereClause     = Criteria.getWhereClause(criteria.criteria)
+              selectStatement =
+                if (distinct)
+                  dialect.filterDistinct(
+                    columns,
+                    properties.table,
+                    whereClause._1
+                  )
+                else
+                  dialect.filter(columns, properties.table, whereClause._1)
+              _ <- Logger[F].info(
+                s"* * * * TableMapping: Table: [${properties.table}], Query: [$selectStatement]"
+              )
+              statement: PreparedStatement = connection.prepareStatement(
+                selectStatement
+              )
+              timer = monitor.startSelectTimer()
+              _     = bindParameters(
+                statement,
+                whereClause._2,
+                connection,
+                dialect
+              )
+              metadata <- getResultSetMetaData(statement)
+              resultSet         = statement.executeQuery()
+              columnDescriptors = ColumnDescriptor.getColumnInformation(
+                metadata,
+                fieldMap,
+                reader,
+                dialect
+              )
+              _ = monitor.stopTimer(timer)
+              _ <- Logger[F].debug(
+                s"==== Column Descriptors: [${columnDescriptors}] ===="
+              )
+              result <- convertResultSet(columnDescriptors.toList, resultSet)
+                .pure[F]
+              _ <- Logger[F].debug(
+                s"* * * TableMapping: Finished Filter on ${properties.table} * * *"
+              )
+              _ = monitor.selectCall()
+            } yield result
+          }
+        }
+      }
 
       override def deleteWhere(criteria: Criteria): F[Int] = {
-        for {
-          _ <- Logger[F].debug(
-            s"* * * TableMapping: Deleting from ${properties.table} * * *"
-          )
-          whereClause = Criteria.getWhereClause(criteria.criteria)
-          deleteStmt  = dialect.delete(tableProps.table, whereClause._1)
-          _ <- Logger[F].info(
-            s"* * * TableMapping: Table: [${properties.table}], Delete: [$deleteStmt] * * *"
-          )
-          preparedStmt <- (connection.prepareStatement(deleteStmt)).pure[F]
-          timer = monitor.startDeleteTimer()
-          _ <- bindParameters(
-            preparedStmt,
-            whereClause._2,
-            connection,
-            dialect
-          )
-            .pure[F]
-          numberUpdated <- (preparedStmt.executeUpdate()).pure[F]
-          _ = monitor.stopTimer(timer)
-          _ <- Logger[F].debug(
-            s"* * * TableMapping: Finished Deleting from ${properties.table} * * *"
-          )
-          _ = monitor.deleteCall()
-        } yield numberUpdated
+        this.withConnection { connection =>
+          {
+            for {
+              _ <- Logger[F].debug(
+                s"* * * TableMapping: Deleting from ${properties.table} * * *"
+              )
+              whereClause = Criteria.getWhereClause(criteria.criteria)
+              deleteStmt  = dialect.delete(tableProps.table, whereClause._1)
+              _ <- Logger[F].info(
+                s"* * * TableMapping: Table: [${properties.table}], Delete: [$deleteStmt] * * *"
+              )
+              preparedStmt <- (connection.prepareStatement(deleteStmt)).pure[F]
+              timer = monitor.startDeleteTimer()
+              _ <- bindParameters(
+                preparedStmt,
+                whereClause._2,
+                connection,
+                dialect
+              )
+                .pure[F]
+              numberUpdated <- (preparedStmt.executeUpdate()).pure[F]
+              _ = monitor.stopTimer(timer)
+              _ <- Logger[F].debug(
+                s"* * * TableMapping: Finished Deleting from ${properties.table} * * *"
+              )
+              _ = monitor.deleteCall()
+            } yield numberUpdated
+          }
+        }
       }
 
       override def updateWhere(
           criteria: Criteria
       )(updateWith: List[KeyValue[Any]]): F[Int] = {
-        for {
-          _ <- Logger[F].debug(
-            s"* * * TableMapping: Updating ${properties.table} * * *"
-          )
-          updateColumns: String = setUpdateColumns(updateWith)
-          newValues             = updateWith.map(_.value)
-          whereClause           = Criteria.getWhereClause(criteria.criteria)
-          updateStmt            = dialect.update(
-            updateColumns,
-            properties.table,
-            whereClause._1
-          )
-          _ <- Logger[F].info(
-            s"* * * TableMapping: Table: [${properties.table}], Update: [$updateStmt] * * *"
-          )
-          preparedStmt <- (connection.prepareStatement(updateStmt)).pure[F]
-          timer = monitor.startUpdateTimer()
-          _ <- (bindParameters(
-            preparedStmt,
-            newValues ++ whereClause._2,
-            connection,
-            dialect
-          )).pure[F]
-          result <- (preparedStmt.executeUpdate()).pure[F]
-          _ = monitor.stopTimer(timer)
-          _ <- Logger[F].debug(
-            s"* * * TableMapping: FinishedUpdating ${properties.table} * * *"
-          )
-          _ = monitor.updateCall()
-        } yield result
+        this.withConnection { connection =>
+          {
+            for {
+              _ <- Logger[F].debug(
+                s"* * * TableMapping: Updating ${properties.table} * * *"
+              )
+              updateColumns: String = setUpdateColumns(updateWith)
+              newValues             = updateWith.map(_.value)
+              whereClause           = Criteria.getWhereClause(criteria.criteria)
+              updateStmt            = dialect.update(
+                updateColumns,
+                properties.table,
+                whereClause._1
+              )
+              _ <- Logger[F].info(
+                s"* * * TableMapping: Table: [${properties.table}], Update: [$updateStmt] * * *"
+              )
+              preparedStmt <- (connection.prepareStatement(updateStmt)).pure[F]
+              timer = monitor.startUpdateTimer()
+              _ <- (bindParameters(
+                preparedStmt,
+                newValues ++ whereClause._2,
+                connection,
+                dialect
+              )).pure[F]
+              result <- (preparedStmt.executeUpdate()).pure[F]
+              _ = monitor.stopTimer(timer)
+              _ <- Logger[F].debug(
+                s"* * * TableMapping: FinishedUpdating ${properties.table} * * *"
+              )
+              _ = monitor.updateCall()
+            } yield result
+          }
+        }
       }
 
       private def getResultSetMetaData(
           sttm: PreparedStatement
-      ): F[ResultSetMetaData] =
+      ): F[ResultSetMetaData] = {
         memoize.memoize[ResultSetMetaData](properties.cachingKey)(_ =>
           sttm.getMetaData().pure[F]
         )
+      }
 
       private def setUpdateColumns(updates: List[KeyValue[Any]]): String = {
         updates
@@ -377,6 +399,14 @@ object TableMapping {
           pkIndexes.map(i => zippedLabels(i))
         }
       }
+
+      override def withConnection[B](f: Connection => F[B]): F[B] =
+        connectionResource.use(f)
+
+      private def connectionResource: Resource[F, Connection] =
+        Resource.fromAutoCloseable(
+          Sync[F].blocking(dataSource.getConnection())
+        )
     }
   }
 }

@@ -1,18 +1,16 @@
 package io.github.thediscprog.anvil.frm
 
-import io.github.thediscprog.anvil.adt.TableProperties
-import io.github.thediscprog.anvil.dialects.DbVendor
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.LocalDateTime
-import java.time.Instant
-import java.io.InputStream
 import cats.Monad
-import org.typelevel.log4cats.Logger
-import java.sql.Connection
-import io.github.thediscprog.anvil.adt.TableMapping
+import cats.effect.kernel.Sync
+import io.github.thediscprog.anvil.adt.{TableMapping, TableProperties}
 import io.github.thediscprog.anvil.annotations.PrimaryKey
 import io.github.thediscprog.anvil.annotations.PrimaryKeyType.*
+import io.github.thediscprog.anvil.dialects.DbVendor
+import org.typelevel.log4cats.Logger
+
+import java.io.InputStream
+import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+import javax.sql.DataSource
 import scala.collection.immutable.BitSet
 
 @PrimaryKey(SINGLE, List("colId"), true)
@@ -99,6 +97,6 @@ object MySQLDataTypes {
     )
   )
 
-  def mysqlDataTypesFRM[F[_]: {Monad, Logger}](connection: Connection) =
-    TableMapping.getFRM[F, MySQLDataTypes](tableProperties, connection)
+  def mysqlDataTypesFRM[F[_]: {Monad, Logger, Sync}](dataSource: DataSource) =
+    TableMapping.getFRM[F, MySQLDataTypes](tableProperties, dataSource)
 }

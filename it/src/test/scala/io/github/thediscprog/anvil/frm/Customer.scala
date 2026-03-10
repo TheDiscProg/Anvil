@@ -1,14 +1,14 @@
 package io.github.thediscprog.anvil.frm
 
-import io.github.thediscprog.anvil.annotations.PrimaryKey
-import io.github.thediscprog.anvil.annotations.PrimaryKeyType
-import io.github.thediscprog.anvil.adt.TableProperties
-import io.github.thediscprog.anvil.dialects.DbVendor
 import cats.Monad
+import cats.effect.kernel.Sync
+import io.github.thediscprog.anvil.adt.{TableMapping, TableProperties}
+import io.github.thediscprog.anvil.annotations.{PrimaryKey, PrimaryKeyType}
+import io.github.thediscprog.anvil.dialects.DbVendor
 import org.typelevel.log4cats.Logger
-import io.github.thediscprog.anvil.adt.TableMapping
-import java.sql.Connection
+
 import java.time.LocalDate
+import javax.sql.DataSource
 
 @PrimaryKey(PrimaryKeyType.SINGLE, List("customerId"), true)
 final case class Customer(
@@ -40,9 +40,9 @@ object Customer {
     )
   )
 
-  def customerFRM[F[_]: {Monad, Logger}](
-      connection: Connection,
+  def customerFRM[F[_]: {Monad, Logger, Sync}](
+      dataSource: DataSource,
       vendor: DbVendor
   ) =
-    TableMapping.getFRM[F, Customer](customerProperties(vendor), connection)
+    TableMapping.getFRM[F, Customer](customerProperties(vendor), dataSource)
 }

@@ -1,23 +1,16 @@
 package io.github.thediscprog.anvil
 
 import cats.effect.IO
-import org.scalatest.time.Span
-import org.scalatest.time.Seconds
-import org.scalatest.time.Millis
-import org.typelevel.log4cats.SelfAwareStructuredLogger
-import org.typelevel.log4cats.slf4j.Slf4jLogger
-import org.testcontainers.postgresql.PostgreSQLContainer
-import org.testcontainers.utility.DockerImageName
-import org.testcontainers.utility.MountableFile
 import cats.effect.unsafe.implicits.global
 import com.zaxxer.hikari.HikariConfig
-import io.github.thediscprog.anvil.jdbcutils.JdbcConnection
-import io.github.thediscprog.anvil.adt.Criteria
-import io.github.thediscprog.anvil.frm.PostgresDataTypes
-import java.util.UUID
-import io.github.thediscprog.anvil.adt.KeyValue
-import io.github.thediscprog.anvil.adt.AND
+import io.github.thediscprog.anvil.adt.{AND, Criteria, KeyValue}
 import io.github.thediscprog.anvil.dialects.DbVendor
+import io.github.thediscprog.anvil.frm.PostgresDataTypes
+import io.github.thediscprog.anvil.jdbcutils.JdbcConnection
+import org.testcontainers.postgresql.PostgreSQLContainer
+import org.testcontainers.utility.{DockerImageName, MountableFile}
+
+import java.util.UUID
 
 class PostgresTableMapTest extends TableMapTest {
 
@@ -36,8 +29,8 @@ class PostgresTableMapTest extends TableMapTest {
     config.setJdbcUrl(dbUrl)
     config.setUsername(username)
     config.setPassword(password)
-    val connection = JdbcConnection.openJdbcConnection(config)
-    new DatabaseFixture[IO](connection, DbVendor.POSTGRESQL)
+    val ds = JdbcConnection.getHikariDataSource(config)
+    new DatabaseFixture[IO](ds, DbVendor.POSTGRESQL)
   }
 
   override protected def beforeAll(): Unit = {
@@ -49,11 +42,11 @@ class PostgresTableMapTest extends TableMapTest {
   }
 
   it should "handle all different PostgreSQL data types" in {
-    val connection = dbFixtures.jdbcCon
-    val frm        = PostgresDataTypes.postgresDataTypesFrm[IO](connection)
-    val uuid       = UUID.randomUUID()
-    val uuidKey    = KeyValue[UUID]("col_uuid", uuid)
-    val criteria   = Criteria(List(AND(List(uuidKey))))
+    val frm =
+      PostgresDataTypes.postgresDataTypesFrm[IO](dbFixtures.getDataSource)
+    val uuid     = UUID.randomUUID()
+    val uuidKey  = KeyValue[UUID]("col_uuid", uuid)
+    val criteria = Criteria(List(AND(List(uuidKey))))
 
     val result =
       for {
@@ -67,10 +60,10 @@ class PostgresTableMapTest extends TableMapTest {
       } yield (row, added, newRow)
 
     whenReady(result.unsafeToFuture()) { (row, added, newRow) =>
-      row.colBigInt shouldBe Some(BigInt("10000000000"))
-      newRow.isDefined shouldBe true
-      added shouldBe 1
-      newRow.value.colUUID shouldBe Some(uuid)
+      row.colBigInt should be(Some(BigInt("10000000000")))
+      newRow.isDefined should be(true)
+      added should be(1)
+      newRow.value.colUUID should be(Some(uuid))
     }
 
   }

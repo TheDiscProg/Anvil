@@ -42,7 +42,7 @@ class CriteriaTest extends AnyFlatSpec, Matchers {
     val clause = Criteria.getWhereClause(List())
 
     clause._1 shouldBe ""
-    clause._2.isEmpty shouldBe true
+    clause._2.isEmpty should be(true)
   }
 
   it should "handle greater than operand" in {
@@ -50,7 +50,7 @@ class CriteriaTest extends AnyFlatSpec, Matchers {
     val clause    = Criteria.getWhereClause(List(andClause))
 
     clause._1 shouldBe "WHERE (id>?)"
-    clause._2 shouldBe List(1)
+    clause._2 should be(List(1))
   }
 
   it should "handle less than operand" in {
@@ -58,7 +58,7 @@ class CriteriaTest extends AnyFlatSpec, Matchers {
     val clause    = Criteria.getWhereClause(List(andClause))
 
     clause._1 shouldBe "WHERE (id<?)"
-    clause._2 shouldBe Array(1)
+    clause._2 should be(Array(1))
   }
 
   it should "handle LIKE operand" in {
@@ -66,7 +66,7 @@ class CriteriaTest extends AnyFlatSpec, Matchers {
     val clause    = Criteria.getWhereClause(List(andClause))
 
     clause._1 shouldBe "WHERE (id LIKE ?)"
-    clause._2 shouldBe Array(1)
+    clause._2 should be(Array(1))
   }
 
   it should "handle single AND criteria" in {
@@ -74,7 +74,7 @@ class CriteriaTest extends AnyFlatSpec, Matchers {
     val clause    = Criteria.getWhereClause(List(andClause))
 
     clause._1 shouldBe "WHERE (id=?)"
-    clause._2 shouldBe Array(1)
+    clause._2 should be(Array(1))
   }
 
   it should "handle multiple AND criteria" in {
@@ -82,7 +82,7 @@ class CriteriaTest extends AnyFlatSpec, Matchers {
     val clause    = Criteria.getWhereClause(List(andClause))
 
     clause._1 shouldBe "WHERE (id=? AND name=?)"
-    clause._2 shouldBe Array(1, "John")
+    clause._2 should be(Array(1, "John"))
   }
 
   it should "handle single OR criteria" in {
@@ -90,7 +90,7 @@ class CriteriaTest extends AnyFlatSpec, Matchers {
     val clause    = Criteria.getWhereClause(List(andClause))
 
     clause._1 shouldBe "WHERE (id=?)"
-    clause._2 shouldBe Array(1)
+    clause._2 should be(Array(1))
   }
 
   it should "handle multiple OR criteria" in {
@@ -98,7 +98,7 @@ class CriteriaTest extends AnyFlatSpec, Matchers {
     val clause   = Criteria.getWhereClause(List(orClause))
 
     clause._1 shouldBe "WHERE (id=? OR name=?)"
-    clause._2 shouldBe Array(1, "John")
+    clause._2 should be(Array(1, "John"))
   }
 
   it should "handle single IN criteria" in {
@@ -106,7 +106,7 @@ class CriteriaTest extends AnyFlatSpec, Matchers {
     val clause   = Criteria.getWhereClause(List(inClause))
 
     clause._1 shouldBe "WHERE (id IN (?))"
-    clause._2 shouldBe Array(1)
+    clause._2 should be(Array(1))
   }
 
   it should "handle multiple IN criteria" in {
@@ -114,7 +114,7 @@ class CriteriaTest extends AnyFlatSpec, Matchers {
     val clause   = Criteria.getWhereClause(List(inClause))
 
     clause._1 shouldBe "WHERE (id IN (?,?))"
-    clause._2 shouldBe Array(1, 2)
+    clause._2 should be(Array(1, 2))
   }
 
   it should "handle combination of AND, OR & IN" in {
@@ -124,6 +124,6 @@ class CriteriaTest extends AnyFlatSpec, Matchers {
     val clauses   = Criteria.getWhereClause(List(inClause, orClause, andClause))
 
     clauses._1 shouldBe "WHERE (id IN (?,?)) AND (id=? OR name=?) AND (id=? AND name=?)"
-    clauses._2 shouldBe Array(1, 2, 1, "John", 2, "Alice")
+    clauses._2 should be(Array(1, 2, 1, "John", 2, "Alice"))
   }
 }
