@@ -41,13 +41,13 @@ class MySqlDialect extends StandardSql {
   ): JDBCReader[?] | Boolean = {
     jdbcType match
       case Types.BIT =>
-        if (scalaFieldName == "Boolean") {
+        if scalaFieldName == "Boolean" then {
           booleanReader
         } else {
           bitSetByteArrayReader
         }
       case Types.BINARY =>
-        if (scalaFieldName == "UUID") {
+        if scalaFieldName == "UUID" then {
           byteToUUIDReader
         } else {
           binaryReader

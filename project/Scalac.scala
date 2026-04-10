@@ -17,6 +17,8 @@ object Scalac {
     "-Wunused:locals", // Warn if a local definition is unused.
     "-Wunused:params", // Warn if a value parameter is unused.
     "-Wunused:privates", // Warn if a private member is unused
-    "-Yretain-trees"
+    "-Yretain-trees",
+    "-new-syntax",
+    "-rewrite"
   )
 }

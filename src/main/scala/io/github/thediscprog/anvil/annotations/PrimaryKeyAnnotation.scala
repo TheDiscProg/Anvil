@@ -25,7 +25,7 @@ object PrimaryKeyAnnotation {
           extractAnnotationValues(keyTypeTerm, listTerm, autoGenTerm)
         val check =
           doSanityCheck(keyTypeOption, columnNamesExpr)
-        if (!check.valueOrAbort) {
+        if !check.valueOrAbort then {
           report.error(
             s"Sanity Check Failed on Primary key annotation [${check.valueOrAbort}]"
           )
@@ -64,15 +64,15 @@ object PrimaryKeyAnnotation {
       case None =>
         report.error(s"Primary Key of type ${keyTypeOption} is not supported")
         PrimaryKeyType.UNSUPPORTED
-    if (keyType == PrimaryKeyType.UNSUPPORTED)
+    if keyType == PrimaryKeyType.UNSUPPORTED then
       Expr(false)
-    if (keyType == PrimaryKeyType.SINGLE && columnNames.size > 1) {
+    if keyType == PrimaryKeyType.SINGLE && columnNames.size > 1 then {
       report.error(
         s"The primary key is defined as a single column but more than one column names have been defined"
       )
       Expr(false)
     }
-    if (keyType == PrimaryKeyType.COMPOSITE && columnNames.size == 1) {
+    if keyType == PrimaryKeyType.COMPOSITE && columnNames.size == 1 then {
       report.error(
         s"The primary key is defined as a composite but only one column names have been given"
       )

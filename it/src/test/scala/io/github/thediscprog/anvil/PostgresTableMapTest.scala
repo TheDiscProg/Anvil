@@ -49,7 +49,7 @@ class PostgresTableMapTest extends TableMapTest {
     val criteria = Criteria(List(AND(List(uuidKey))))
 
     val result =
-      for {
+      for
         rowMaybe <- frm.headOption(Criteria(List()))
         row = rowMaybe match
           case Some(row) => row
@@ -57,7 +57,7 @@ class PostgresTableMapTest extends TableMapTest {
         rowToAdd = row.copy(colUUID = Some(uuid))
         added  <- frm.add(rowToAdd)
         newRow <- frm.headOption(criteria)
-      } yield (row, added, newRow)
+      yield (row, added, newRow)
 
     whenReady(result.unsafeToFuture()) { (row, added, newRow) =>
       row.colBigInt should be(Some(BigInt("10000000000")))

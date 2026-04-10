@@ -37,7 +37,7 @@ object JDBCBinder {
     val isVendorBinding = dialect.bindParameter(ptst, value, index)
     if (printDebugInfo) then
       println(s"Binding parameter index: $index: [$isVendorBinding]")
-    if (!isVendorBinding) {
+    if !isVendorBinding then {
       value match
         case v: Array      => ptst.setArray(index, v)
         case v: BigDecimal => ptst.setBigDecimal(index, v.bigDecimal)
@@ -84,8 +84,8 @@ object JDBCBinder {
   private def bitSetConverter(bs: JBitSet): String = {
     val sb  = new StringBuilder
     val len = bs.length()
-    for (i <- 0 until len) {
-      sb.append(if (bs.get(i)) '1' else '0')
+    for i <- 0 until len do {
+      sb.append(if bs.get(i) then '1' else '0')
     }
     sb.toString()
   }

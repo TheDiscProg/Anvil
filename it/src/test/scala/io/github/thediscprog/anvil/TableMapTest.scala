@@ -108,7 +108,7 @@ abstract class TableMapTest()
     val postcode        = KeyValue("post_code", "MS1 1TT")
     val addressCriteria = Criteria(List(AND(List(postcode))))
 
-    val result = for {
+    val result = for
       numberCAdded  <- customerFRM.add(andrewS)
       _             <- unsafeLogger.info(s"Adding address")
       numberAAdded  <- addressFRM <+ addressAS
@@ -152,7 +152,7 @@ abstract class TableMapTest()
         Criteria(List(AND(List(customerIdCriteria))))
       )
 
-    } yield (
+    yield (
       addedCustomer,
       addedAddress,
       numCAAdded,
@@ -212,7 +212,7 @@ abstract class TableMapTest()
     val userKey          = KeyValue("type_key", "SER")
     val userTypeCriteria = Criteria(List(AND(List(userKey))))
 
-    val result = for {
+    val result = for
       numUserTypeAdded <- userTypeFRM <+ userType
       serMaybe         <- userTypeFRM /? userTypeCriteria
       serType = serMaybe match
@@ -233,7 +233,7 @@ abstract class TableMapTest()
       droppedUser     <- usersFrm <-- userCriteria
       droppedST       <- userTypeFRM <-- userTypeCriteria
       droppedCustomer <- customerFRM <-- customerCriteria
-    } yield (
+    yield (
       numUserTypeAdded,
       numUserTypeAdded,
       addedCustomer,

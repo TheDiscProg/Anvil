@@ -25,7 +25,7 @@ object ProductMacro {
     import q.reflect.*
     val tpe = TypeRepr.of[T]
     val sym = tpe.typeSymbol
-    if (!sym.flags.is(Flags.Case)) {
+    if !sym.flags.is(Flags.Case) then {
       report.error(
         s"${sym.name} is not a case class - only case class can be used in this context"
       )
@@ -45,7 +45,7 @@ object ProductMacro {
     import q.reflect.*
     val tpe = TypeRepr.of[T]
     val sym = tpe.typeSymbol
-    if (!sym.flags.is(Flags.Case)) {
+    if !sym.flags.is(Flags.Case) then {
       report.error(
         s"${sym.name} is not a case class - only case classes can be used for mapping"
       )

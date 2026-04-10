@@ -49,7 +49,7 @@ class MySQLTableMappingTest extends TableMapTest {
     val criteria = Criteria(List(AND(List(KeyValue("col_datetime", now)))))
 
     val result =
-      for {
+      for
         rowMayBe <- frm.headOption(Criteria(List()))
         row = rowMayBe match
           case Some(row) => row
@@ -57,7 +57,7 @@ class MySQLTableMappingTest extends TableMapTest {
         rowToAdd = row.copy(colDateTime = Some(now))
         added <- frm.add(rowToAdd)
         rows  <- frm.filter(Criteria(List()))
-      } yield (row, added, rows)
+      yield (row, added, rows)
 
     whenReady(result.unsafeToFuture()) { (row, added, rows) =>
       row.colBigInt.value should be(1234567890123L)

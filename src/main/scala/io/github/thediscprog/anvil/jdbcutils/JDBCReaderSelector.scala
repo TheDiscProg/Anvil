@@ -43,14 +43,14 @@ class JDBCReaderSelector {
           case Types.LONGVARCHAR => stringReader
           case Types.DATE        => dateReader
           case Types.TIME        =>
-            if (scalaFieldName == "OffsetTime" || columnTypeName == "timetz")
+            if scalaFieldName == "OffsetTime" || columnTypeName == "timetz" then
               offsetTimeReader
             else
               timeReader
           case Types.TIMESTAMP =>
-            if (
+            if
               scalaFieldName == "OffsetDateTime" || columnTypeName == "timestamptz"
-            )
+            then
               offsetDateTimeStampReader
             else
               dateTimeStampReader

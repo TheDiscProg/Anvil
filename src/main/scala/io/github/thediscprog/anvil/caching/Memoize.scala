@@ -19,7 +19,7 @@ sealed trait Memoize[K, F[_]] {
 
 }
 
-class CaffeineMemoize[F[_]: {Monad, Logger}] extends Memoize[String, F] {
+class CaffeineMemoize[F[_]: Monad: Logger] extends Memoize[String, F] {
 
   val cache: Cache[String, Any] =
     Scaffeine()
@@ -35,12 +35,12 @@ class CaffeineMemoize[F[_]: {Monad, Logger}] extends Memoize[String, F] {
       f: String => F[V]
   )(using monitor: AnvilMonitor): F[V] = {
     val value = cache.getIfPresent(k)
-    if (value == null || value.isEmpty) {
-      for {
+    if value == null || value.isEmpty then {
+      for
         _ <- Logger[F].debug(s"Memoize: Storing for $k")
         v <- f(k)
         _ <- cache.put(k, v).pure[F]
-      } yield v
+      yield v
     } else {
       value match
         case Some(stored) =>
@@ -59,5 +59,5 @@ class CaffeineMemoize[F[_]: {Monad, Logger}] extends Memoize[String, F] {
 
 object Memoize {
 
-  def getMemoizeFunction[F[_]: {Monad, Logger}] = new CaffeineMemoize[F]()
+  def getMemoizeFunction[F[_]: Monad: Logger] = new CaffeineMemoize[F]()
 }
