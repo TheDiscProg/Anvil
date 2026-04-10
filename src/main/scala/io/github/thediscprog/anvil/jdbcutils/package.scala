@@ -7,7 +7,7 @@ import java.util.{BitSet as JBitSet}
 
 package object jdbcutils {
 
-  val printDebugInfo = false
+  val printDebugInfo = true
 
   def bytesToUUID(bytes: Array[Byte]): UUID = {
     require(bytes != null && bytes.length == 16, "UUID must be 16 bytes.")

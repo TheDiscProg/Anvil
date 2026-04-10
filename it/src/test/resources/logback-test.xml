@@ -11,11 +11,11 @@
         </encoder>
     </appender>
 
-    <logger name="io.github.thediscprog.anvil" additivity="true" level="WARN">
+    <logger name="io.github.thediscprog.anvil" additivity="false" level="INFO">
         <appender-ref ref="STDOUT"/>
     </logger>
 
-    <logger name="ch.qos.logback" additivity="true" level="WARN">
+    <logger name="ch.qos.logback" additivity="false" level="WARN">
         <appender-ref ref="STDOUT"/>
     </logger>
 
