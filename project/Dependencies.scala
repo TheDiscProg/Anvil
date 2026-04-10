@@ -11,7 +11,7 @@ object Dependencies {
   private lazy val log4catsVersion = "2.7.1"
   private lazy val postgresVersion = "42.7.8"
   private lazy val mysqlVersion = "9.5.0"
-  private lazy val testcontainerVersion = "2.0.1"
+  private lazy val testcontainerVersion = "2.0.4"
   private lazy val kamonVersion = "2.8.0"
 
   lazy val all = Seq(

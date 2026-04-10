@@ -35,7 +35,7 @@ trait JDBCReader[T](using val converter: JDBCConverter[T]) {
       reader: JDBCReaderSelector,
       dialect: SqlDialect
   ): List[Any] | Option[List[Any]] = {
-    if (isNullable) {
+    if isNullable then {
       val sqlArray = Option(rs.getArray(index))
       sqlArray.map(array => readArrayValues(columnName, array, reader, dialect))
     } else {

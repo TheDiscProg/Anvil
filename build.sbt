@@ -4,12 +4,16 @@ import xerial.sbt.Sonatype._
 
 import scala.collection.Seq
 
-lazy val scala3 = "3.7.3"
-lazy val supportedScalaVersions = List(scala3)
+lazy val scala3LTS = "3.3.7"
+lazy val scala37 = "3.7.4"
+lazy val scala38 = "3.8.3"
+lazy val supportedScalaVersions = List(scala3LTS, scala37, scala38)
 
 lazy val commonSettings = Seq(
-  scalaVersion := scala3,
-  libraryDependencies ++= Dependencies.all
+  scalaVersion := scala38,
+  libraryDependencies ++= Dependencies.all,
+  crossScalaVersions := supportedScalaVersions,
+  scalacOptions ++= Scalac.options
 )
 
 lazy val root = (project in file("."))
@@ -18,9 +22,7 @@ lazy val root = (project in file("."))
   )
   .settings(
     commonSettings,
-    name := "anvil",
-    scalacOptions ++= Scalac.options,
-    crossScalaVersions := supportedScalaVersions
+    name := "anvil"
   )
 
 lazy val integrationTest = (project in file("it"))
@@ -38,7 +40,7 @@ lazy val integrationTest = (project in file("it"))
   .dependsOn(root % "test->test; compile->compile")
   .aggregate(root)
 
-ThisBuild / version := "0.3.0"
+ThisBuild / version := "0.3.1"
 ThisBuild / organization := "io.github.thediscprog"
 ThisBuild / organizationName := "thediscprog"
 ThisBuild / organizationHomepage := Some(url("https://github.com/TheDiscProg"))

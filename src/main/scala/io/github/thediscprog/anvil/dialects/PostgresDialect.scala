@@ -53,7 +53,7 @@ class PostgresDialect extends StandardSql {
   ): JDBCReader[?] | Boolean = {
     jdbcType match
       case Types.BIT =>
-        if (scalaFieldName == "Boolean" || columnTypeName == "bool")
+        if scalaFieldName == "Boolean" || columnTypeName == "bool" then
           booleanReader
         else
           bitSetReader

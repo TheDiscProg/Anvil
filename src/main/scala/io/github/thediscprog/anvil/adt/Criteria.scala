@@ -19,7 +19,7 @@ object Criteria {
   def getWhereClause(
       criteria: List[Where]
   )(using monitor: AnvilMonitor): (String, List[Any]) = {
-    if (criteria.isEmpty) {
+    if criteria.isEmpty then {
       ("", List())
     } else {
       val (whereClause, values) = extractClauses(criteria)
